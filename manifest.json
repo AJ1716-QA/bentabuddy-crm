@@ -1,0 +1,12 @@
+{
+  "name": "BentaBuddy CRM",
+  "short_name": "BentaBuddy",
+  "description": "Customer and order management for Filipino online sellers.",
+  "start_url": "./",
+  "scope": "./",
+  "display": "standalone",
+  "orientation": "portrait",
+  "background_color": "#f4f7fb",
+  "theme_color": "#102a56",
+  "icons": []
+}

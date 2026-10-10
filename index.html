@@ -1,0 +1,70 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <meta name="theme-color" content="#102a56">
+  <meta name="description" content="BentaBuddy CRM helps Filipino online sellers manage customers, inquiries, follow-ups, products and orders.">
+  <link rel="manifest" href="./manifest.json">
+  <link rel="stylesheet" href="./styles.css">
+  <title>BentaBuddy CRM</title>
+</head>
+<body>
+  <main class="app-shell">
+    <header class="brand">
+      <div class="brand-mark">BB</div>
+      <div><h1>BentaBuddy <span>CRM</span></h1><p>Your customers. Your orders. Your next sale.</p></div>
+    </header>
+
+    <section id="notice" class="notice" role="status" aria-live="polite" hidden></section>
+
+    <section id="auth-panel" class="panel">
+      <div class="tabs" role="tablist" aria-label="Account access">
+        <button id="login-tab" class="tab active" type="button">Log in</button>
+        <button id="signup-tab" class="tab" type="button">Create account</button>
+      </div>
+      <form id="auth-form">
+        <h2 id="auth-title">Welcome back</h2>
+        <p id="auth-subtitle" class="muted">Log in to manage your business.</p>
+        <label id="name-label" hidden>Full name
+          <input id="full-name" name="fullName" autocomplete="name" maxlength="120" placeholder="Your full name">
+        </label>
+        <label id="business-label" hidden>Business name
+          <input id="business-name" name="businessName" maxlength="120" placeholder="e.g. Maria's Online Shop">
+        </label>
+        <label>Email address
+          <input id="email" name="email" type="email" autocomplete="email" required maxlength="254" placeholder="you@example.com">
+        </label>
+        <label>Password
+          <input id="password" name="password" type="password" autocomplete="current-password" minlength="8" required placeholder="At least 8 characters">
+        </label>
+        <button id="submit-button" class="primary" type="submit">Log in</button>
+        <p class="fine-print">By continuing, you agree to use BentaBuddy CRM responsibly. Keep customer information private.</p>
+      </form>
+    </section>
+
+    <section id="app-panel" hidden>
+      <div class="welcome-row">
+        <div><p class="eyebrow">YOUR BUSINESS</p><h2 id="business-title">My Business</h2><p id="user-email" class="muted"></p></div>
+        <button id="logout-button" class="secondary" type="button">Log out</button>
+      </div>
+      <div class="trial-card">
+        <div><p class="eyebrow">YOUR PLAN</p><h3 id="plan-title">Checking trial…</h3><p id="trial-detail" class="muted">Loading subscription status.</p></div>
+        <div id="plan-icon" class="plan-icon">✓</div>
+      </div>
+      <div id="expired-message" class="notice warning" hidden>Your trial has ended. Your business records remain in the database, but CRM data access is restricted until a valid plan is activated.</div>
+      <h2 class="section-title">Your workspace</h2>
+      <div class="feature-grid">
+        <article class="feature"><span>01</span><h3>Customers</h3><p>Keep buyer contact details organized.</p><small>Coming next</small></article>
+        <article class="feature"><span>02</span><h3>Leads & inquiries</h3><p>Track people interested in buying.</p><small>Coming next</small></article>
+        <article class="feature"><span>03</span><h3>Follow-ups</h3><p>Remember who to contact next.</p><small>Coming next</small></article>
+        <article class="feature"><span>04</span><h3>Products & orders</h3><p>Keep products and order details together.</p><small>Coming next</small></article>
+      </div>
+      <p class="fine-print">This is the initial foundation. Subscription activation and payment verification must be completed on a trusted server before paid plans are offered.</p>
+    </section>
+    <footer>© <span id="year"></span> BentaBuddy CRM · Built for small businesses</footer>
+  </main>
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+  <script src="./app.js"></script>
+</body>
+</html>
