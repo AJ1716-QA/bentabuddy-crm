@@ -4,8 +4,8 @@
   "use strict";
 
   // TODO: Replace these two placeholders with your own project's values.
-  const SUPABASE_URL = "PASTE_YOUR_SUPABASE_PROJECT_URL_HERE";
-  const SUPABASE_PUBLISHABLE_KEY = "PASTE_YOUR_SUPABASE_PUBLISHABLE_OR_ANON_KEY_HERE";
+  const SUPABASE_URL = https://hvoqsyhbrgeiztvyooym.supabase.co/rest/v1/;
+  const SUPABASE_PUBLISHABLE_KEY = sb_publishable_sC6DNOZq5gehKrCkPkZaYA_AYsUhtyD;
 
   const $ = (id) => document.getElementById(id);
   const notice = $("notice");
