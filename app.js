@@ -117,6 +117,117 @@
     finally{button.disabled=false;button.textContent="Save customer";}
   });
 
+
+  let productRows = [];
+  let productEditMode = false;
+  function showDashboardOnly(){
+    $("customers-panel").hidden=true;
+    $("products-panel").hidden=true;
+    document.querySelector(".section-title").hidden=false;
+    document.querySelector(".feature-grid").hidden=false;
+  }
+  function showCustomersPanel(){
+    $("products-panel").hidden=true;
+    $("customers-panel").hidden=false;
+    document.querySelector(".section-title").hidden=true;
+    document.querySelector(".feature-grid").hidden=true;
+    $("customer-search").value="";
+    $("customer-form").hidden=true;
+    loadCustomers();
+    $("customers-panel").scrollIntoView({behavior:"smooth",block:"start"});
+  }
+  function showProductsPanel(){
+    $("customers-panel").hidden=true;
+    $("products-panel").hidden=false;
+    document.querySelector(".section-title").hidden=true;
+    document.querySelector(".feature-grid").hidden=true;
+    $("product-search").value="";
+    $("product-form").hidden=true;
+    loadProducts();
+    $("products-panel").scrollIntoView({behavior:"smooth",block:"start"});
+  }
+  function productMessage(message,isError=false){
+    const el=$("products-message");el.textContent=message;el.classList.toggle("customer-error",isError);
+  }
+  function resetProductForm(){
+    $("product-form").reset();$("product-id").value="";productEditMode=false;
+    $("product-form-title").textContent="Add product";$("save-product").textContent="Save product";$("product-form").hidden=true;
+  }
+  async function loadProducts(){
+    if(!supabase||!currentBusinessId){productMessage("Business details are still loading. Please try again.",true);return;}
+    productMessage("Loading products…");$("products-list").innerHTML="";
+    const {data,error}=await supabase.from("products")
+      .select("id,business_id,product_name,sku,description,selling_price,cost_price,is_active,created_at,updated_at")
+      .eq("business_id",currentBusinessId).eq("is_active",true).order("product_name",{ascending:true});
+    if(error){console.error("Product load failed:",error);productMessage("Could not load products. Please check the products table policies.",true);return;}
+    productRows=data||[];renderProducts();
+  }
+  function money(value){
+    const n=Number(value||0);
+    return n.toLocaleString("en-PH",{style:"currency",currency:"PHP",minimumFractionDigits:2,maximumFractionDigits:2});
+  }
+  function renderProducts(){
+    const q=$("product-search").value.trim().toLowerCase();
+    const rows=productRows.filter(p=>[p.product_name,p.sku,p.description].some(v=>String(v||"").toLowerCase().includes(q)));
+    if(!rows.length){
+      $("products-list").innerHTML='<div class="empty-customers"><strong>'+(q?"No matching products":"No products yet")+'</strong><p>'+(q?"Try another search term.":"Select “Add product” to save your first product.")+'</p></div>';
+      productMessage(q?"No matching products":"0 products saved");return;
+    }
+    $("products-list").innerHTML=rows.map(p=>'<article class="customer-card"><div class="customer-card-main"><div class="product-avatar">₱</div><div class="customer-card-details"><h3>'+escapeHtml(p.product_name)+'</h3><p>'+(p.sku?'<span>SKU: '+escapeHtml(p.sku)+'</span>':"")+'<span>Selling: '+money(p.selling_price)+'</span><span>Cost: '+money(p.cost_price)+'</span></p>'+(p.description?'<p class="customer-address">'+escapeHtml(p.description)+'</p>':"")+'</div></div><div class="customer-actions"><button class="secondary" type="button" data-edit-product="'+p.id+'">Edit</button><button class="secondary customer-delete" type="button" data-delete-product="'+p.id+'">Delete</button></div></article>').join("");
+    productMessage(rows.length+" product"+(rows.length===1?"":"s")+" shown");
+  }
+  function editProduct(id){
+    const p=productRows.find(r=>r.id===id);if(!p)return;
+    $("product-id").value=p.id;$("product-name").value=p.product_name||"";$("product-sku").value=p.sku||"";
+    $("product-description").value=p.description||"";$("product-selling-price").value=p.selling_price??"";
+    $("product-cost-price").value=p.cost_price??"";
+    productEditMode=true;$("product-form-title").textContent="Edit product";$("save-product").textContent="Save changes";
+    $("product-form").hidden=false;$("product-form").scrollIntoView({behavior:"smooth",block:"start"});$("product-name").focus();
+  }
+  $("open-customers").addEventListener("click",showCustomersPanel);
+  $("open-products").addEventListener("click",showProductsPanel);
+  $("back-dashboard").addEventListener("click",showDashboardOnly);
+  $("back-products-dashboard").addEventListener("click",showDashboardOnly);
+  $("add-product").addEventListener("click",()=>{resetProductForm();$("product-form").hidden=false;$("product-form").scrollIntoView({behavior:"smooth",block:"start"});$("product-name").focus();});
+  $("cancel-product").addEventListener("click",resetProductForm);
+  $("product-search").addEventListener("input",renderProducts);
+  $("products-list").addEventListener("click",async event=>{
+    const edit=event.target.closest("[data-edit-product]");
+    if(edit){editProduct(edit.dataset.editProduct);return;}
+    const del=event.target.closest("[data-delete-product]");if(!del)return;
+    const id=del.dataset.deleteProduct,p=productRows.find(r=>r.id===id);
+    if(!p||!window.confirm("Permanently delete "+p.product_name+"?"))return;
+    del.disabled=true;
+    const {error}=await supabase.from("products").delete().eq("id",id).eq("business_id",currentBusinessId);
+    if(error){console.error(error);productMessage("Could not delete this product. Please check database policies.",true);del.disabled=false;return;}
+    productRows=productRows.filter(r=>r.id!==id);renderProducts();productMessage("Product deleted.");
+  });
+  $("product-form").addEventListener("submit",async event=>{
+    event.preventDefault();
+    if(!supabase||!currentBusinessId){productMessage("Business details are not ready. Please refresh and try again.",true);return;}
+    const id=$("product-id").value;
+    const name=$("product-name").value.trim();
+    const sku=$("product-sku").value.trim();
+    const selling=Number($("product-selling-price").value);
+    const costRaw=$("product-cost-price").value.trim();
+    const cost=costRaw===""?0:Number(costRaw);
+    if(!name){$("product-name").focus();return;}
+    if(!Number.isFinite(selling)||selling<0||!Number.isFinite(cost)||cost<0){productMessage("Enter valid non-negative prices.",true);return;}
+    if(sku&&productRows.some(p=>String(p.sku||"").toLowerCase()===sku.toLowerCase()&&p.id!==id)){
+      productMessage("That SKU is already used by another product. Enter a different SKU.",true);$("product-sku").focus();return;
+    }
+    const payload={business_id:currentBusinessId,product_name:name,sku:sku||null,description:$("product-description").value.trim()||null,selling_price:selling,cost_price:cost,is_active:true,updated_at:new Date().toISOString()};
+    const button=$("save-product");button.disabled=true;button.textContent="Saving…";
+    try{
+      let result;
+      if(id&&productEditMode)result=await supabase.from("products").update(payload).eq("id",id).eq("business_id",currentBusinessId).select("id").single();
+      else result=await supabase.from("products").insert(payload).select("id").single();
+      if(result.error)throw result.error;
+      resetProductForm();await loadProducts();productMessage(id?"Product details updated.":"Product added successfully.");
+    }catch(err){console.error("Product save failed:",err);productMessage(err?.message||"Could not save this product. Please try again.",true);}
+    finally{button.disabled=false;button.textContent="Save product";}
+  });
+
   async function loadDashboard(user) {
     showApp();
     $("user-email").textContent = user.email || "";
