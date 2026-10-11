@@ -228,6 +228,113 @@
     finally{button.disabled=false;button.textContent="Save product";}
   });
 
+
+  let leadRows = [];
+  let leadEditMode = false;
+  function showDashboardOnly(){
+    $("customers-panel").hidden=true;$("products-panel").hidden=true;$("leads-panel").hidden=true;
+    document.querySelector(".section-title").hidden=false;document.querySelector(".feature-grid").hidden=false;
+  }
+  function showCustomersPanel(){
+    $("products-panel").hidden=true;$("leads-panel").hidden=true;$("customers-panel").hidden=false;
+    document.querySelector(".section-title").hidden=true;document.querySelector(".feature-grid").hidden=true;
+    $("customer-search").value="";$("customer-form").hidden=true;loadCustomers();
+    $("customers-panel").scrollIntoView({behavior:"smooth",block:"start"});
+  }
+  function showProductsPanel(){
+    $("customers-panel").hidden=true;$("leads-panel").hidden=true;$("products-panel").hidden=false;
+    document.querySelector(".section-title").hidden=true;document.querySelector(".feature-grid").hidden=true;
+    $("product-search").value="";$("product-form").hidden=true;loadProducts();
+    $("products-panel").scrollIntoView({behavior:"smooth",block:"start"});
+  }
+  function showLeadsPanel(){
+    $("customers-panel").hidden=true;$("products-panel").hidden=true;$("leads-panel").hidden=false;
+    document.querySelector(".section-title").hidden=true;document.querySelector(".feature-grid").hidden=true;
+    $("lead-search").value="";$("lead-form").hidden=true;loadLeads();
+    $("leads-panel").scrollIntoView({behavior:"smooth",block:"start"});
+  }
+  function leadMessage(message,isError=false){
+    const el=$("leads-message");el.textContent=message;el.classList.toggle("customer-error",isError);
+  }
+  function resetLeadForm(){
+    $("lead-form").reset();$("lead-id").value="";leadEditMode=false;
+    $("lead-form-title").textContent="Add lead";$("save-lead").textContent="Save lead";$("lead-form").hidden=true;
+  }
+  async function loadLeads(){
+    if(!supabase||!currentBusinessId){leadMessage("Business details are still loading. Please try again.",true);return;}
+    leadMessage("Loading leads…");$("leads-list").innerHTML="";
+    const {data,error}=await supabase.from("leads")
+      .select("id,business_id,customer_id,contact_name,phone,email,source,inquiry,stage,estimated_value,next_follow_up_at,notes,is_archived,created_at,updated_at")
+      .eq("business_id",currentBusinessId).eq("is_archived",false).order("created_at",{ascending:false});
+    if(error){console.error("Lead load failed:",error);leadMessage("Could not load leads. Please check the leads table policies.",true);return;}
+    leadRows=data||[];renderLeads();
+  }
+  function localDateTime(value){
+    if(!value)return "";
+    const d=new Date(value);if(Number.isNaN(d.getTime()))return "";
+    const pad=n=>String(n).padStart(2,"0");
+    return d.getFullYear()+"-"+pad(d.getMonth()+1)+"-"+pad(d.getDate())+"T"+pad(d.getHours())+":"+pad(d.getMinutes());
+  }
+  function renderLeads(){
+    const q=$("lead-search").value.trim().toLowerCase();
+    const rows=leadRows.filter(l=>[l.contact_name,l.phone,l.email,l.source,l.inquiry,l.stage,l.notes].some(v=>String(v||"").toLowerCase().includes(q)));
+    if(!rows.length){
+      $("leads-list").innerHTML='<div class="empty-customers"><strong>'+(q?"No matching leads":"No leads yet")+'</strong><p>'+(q?"Try another search term.":"Select “Add lead” to save your first inquiry.")+'</p></div>';
+      leadMessage(q?"No matching leads":"0 leads saved");return;
+    }
+    $("leads-list").innerHTML=rows.map(l=>'<article class="customer-card"><div class="customer-card-main"><div class="product-avatar">↗</div><div class="customer-card-details"><h3>'+escapeHtml(l.contact_name)+'</h3><p><span class="lead-stage">'+escapeHtml(l.stage||"New")+'</span>'+(l.phone?'<span>☎ '+escapeHtml(l.phone)+'</span>':"")+(l.email?'<span>✉ '+escapeHtml(l.email)+'</span>':"")+(l.source?'<span>Source: '+escapeHtml(l.source)+'</span>':"")+'</p>'+(l.inquiry?'<p class="customer-address"><strong>Inquiry:</strong> '+escapeHtml(l.inquiry)+'</p>':"")+(l.estimated_value!==null&&l.estimated_value!==undefined?'<p class="customer-address"><strong>Estimated value:</strong> '+money(l.estimated_value)+'</p>':"")+(l.next_follow_up_at?'<p class="customer-address"><strong>Follow-up:</strong> '+escapeHtml(formatDate(l.next_follow_up_at))+'</p>':"")+(l.notes?'<p class="customer-notes">'+escapeHtml(l.notes)+'</p>':"")+'</div></div><div class="customer-actions"><button class="secondary" type="button" data-edit-lead="'+l.id+'">Edit</button><button class="secondary customer-delete" type="button" data-delete-lead="'+l.id+'">Delete</button></div></article>').join("");
+    leadMessage(rows.length+" lead"+(rows.length===1?"":"s")+" shown");
+  }
+  function editLead(id){
+    const l=leadRows.find(r=>r.id===id);if(!l)return;
+    $("lead-id").value=l.id;$("lead-contact-name").value=l.contact_name||"";$("lead-phone").value=l.phone||"";
+    $("lead-email").value=l.email||"";$("lead-source").value=l.source||"";$("lead-inquiry").value=l.inquiry||"";
+    $("lead-stage").value=["New","Contacted","Qualified","Won","Lost"].includes(l.stage)?l.stage:"New";
+    $("lead-value").value=l.estimated_value??"";$("lead-follow-up").value=localDateTime(l.next_follow_up_at);
+    $("lead-notes").value=l.notes||"";leadEditMode=true;$("lead-form-title").textContent="Edit lead";
+    $("save-lead").textContent="Save changes";$("lead-form").hidden=false;
+    $("lead-form").scrollIntoView({behavior:"smooth",block:"start"});$("lead-contact-name").focus();
+  }
+  $("open-customers").addEventListener("click",showCustomersPanel);
+  $("open-products").addEventListener("click",showProductsPanel);
+  $("open-leads").addEventListener("click",showLeadsPanel);
+  $("back-dashboard").addEventListener("click",showDashboardOnly);
+  $("back-products-dashboard").addEventListener("click",showDashboardOnly);
+  $("back-leads-dashboard").addEventListener("click",showDashboardOnly);
+  $("add-lead").addEventListener("click",()=>{resetLeadForm();$("lead-form").hidden=false;$("lead-form").scrollIntoView({behavior:"smooth",block:"start"});$("lead-contact-name").focus();});
+  $("cancel-lead").addEventListener("click",resetLeadForm);
+  $("lead-search").addEventListener("input",renderLeads);
+  $("leads-list").addEventListener("click",async event=>{
+    const edit=event.target.closest("[data-edit-lead]");if(edit){editLead(edit.dataset.editLead);return;}
+    const del=event.target.closest("[data-delete-lead]");if(!del)return;
+    const id=del.dataset.deleteLead,l=leadRows.find(r=>r.id===id);
+    if(!l||!window.confirm("Permanently delete lead for "+l.contact_name+"?"))return;
+    del.disabled=true;
+    const {error}=await supabase.from("leads").delete().eq("id",id).eq("business_id",currentBusinessId);
+    if(error){console.error(error);leadMessage("Could not delete this lead. Please check database policies.",true);del.disabled=false;return;}
+    leadRows=leadRows.filter(r=>r.id!==id);renderLeads();leadMessage("Lead deleted.");
+  });
+  $("lead-form").addEventListener("submit",async event=>{
+    event.preventDefault();
+    if(!supabase||!currentBusinessId){leadMessage("Business details are not ready. Please refresh and try again.",true);return;}
+    const id=$("lead-id").value,name=$("lead-contact-name").value.trim();
+    const valueRaw=$("lead-value").value.trim(),value=valueRaw===""?null:Number(valueRaw);
+    if(!name){$("lead-contact-name").focus();return;}
+    if(value!==null&&(!Number.isFinite(value)||value<0)){leadMessage("Enter a valid non-negative estimated value.",true);return;}
+    const followRaw=$("lead-follow-up").value;
+    const followUp=followRaw?new Date(followRaw).toISOString():null;
+    const payload={business_id:currentBusinessId,customer_id:null,contact_name:name,phone:$("lead-phone").value.trim()||null,email:$("lead-email").value.trim()||null,source:$("lead-source").value.trim()||"manual",inquiry:$("lead-inquiry").value.trim()||null,stage:$("lead-stage").value||"New",estimated_value:value,next_follow_up_at:followUp,notes:$("lead-notes").value.trim()||null,is_archived:false,updated_at:new Date().toISOString()};
+    const button=$("save-lead");button.disabled=true;button.textContent="Saving…";
+    try{
+      let result;
+      if(id&&leadEditMode)result=await supabase.from("leads").update(payload).eq("id",id).eq("business_id",currentBusinessId).select("id").single();
+      else result=await supabase.from("leads").insert(payload).select("id").single();
+      if(result.error)throw result.error;
+      resetLeadForm();await loadLeads();leadMessage(id?"Lead details updated.":"Lead added successfully.");
+    }catch(err){console.error("Lead save failed:",err);leadMessage(err?.message||"Could not save this lead. Please try again.",true);}
+    finally{button.disabled=false;button.textContent="Save lead";}
+  });
+
   async function loadDashboard(user) {
     showApp();
     $("user-email").textContent = user.email || "";
