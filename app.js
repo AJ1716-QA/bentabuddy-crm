@@ -289,7 +289,7 @@
     const l=leadRows.find(r=>r.id===id);if(!l)return;
     $("lead-id").value=l.id;$("lead-contact-name").value=l.contact_name||"";$("lead-phone").value=l.phone||"";
     $("lead-email").value=l.email||"";$("lead-source").value=l.source||"";$("lead-inquiry").value=l.inquiry||"";
-    $("lead-stage").value=["New","Contacted","Qualified","Won","Lost"].includes(l.stage)?l.stage:"New";
+    $("lead-stage").value=["new","contacted","interested","negotiation","converted","lost"].includes(l.stage)?l.stage:"new";
     $("lead-value").value=l.estimated_value??"";$("lead-follow-up").value=localDateTime(l.next_follow_up_at);
     $("lead-notes").value=l.notes||"";leadEditMode=true;$("lead-form-title").textContent="Edit lead";
     $("save-lead").textContent="Save changes";$("lead-form").hidden=false;
@@ -323,7 +323,7 @@
     if(value!==null&&(!Number.isFinite(value)||value<0)){leadMessage("Enter a valid non-negative estimated value.",true);return;}
     const followRaw=$("lead-follow-up").value;
     const followUp=followRaw?new Date(followRaw).toISOString():null;
-    const payload={business_id:currentBusinessId,customer_id:null,contact_name:name,phone:$("lead-phone").value.trim()||null,email:$("lead-email").value.trim()||null,source:$("lead-source").value.trim()||"manual",inquiry:$("lead-inquiry").value.trim()||null,stage:$("lead-stage").value||"New",estimated_value:value,next_follow_up_at:followUp,notes:$("lead-notes").value.trim()||null,is_archived:false,updated_at:new Date().toISOString()};
+    const payload={business_id:currentBusinessId,customer_id:null,contact_name:name,phone:$("lead-phone").value.trim()||null,email:$("lead-email").value.trim()||null,source:$("lead-source").value.trim()||"manual",inquiry:$("lead-inquiry").value.trim()||null,stage:$("lead-stage").value||"new",estimated_value:value,next_follow_up_at:followUp,notes:$("lead-notes").value.trim()||null,is_archived:false,updated_at:new Date().toISOString()};
     const button=$("save-lead");button.disabled=true;button.textContent="Saving…";
     try{
       let result;
