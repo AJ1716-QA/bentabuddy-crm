@@ -55,11 +55,25 @@
       <div id="expired-message" class="notice warning" hidden>Your trial has ended. Your business records remain in the database, but CRM data access is restricted until a valid plan is activated.</div>
       <h2 class="section-title">Your workspace</h2>
       <div class="feature-grid">
-        <article class="feature"><span>01</span><h3>Customers</h3><p>Keep buyer contact details organized.</p><small>Coming next</small></article>
+        <button id="open-customers" class="feature feature-button" type="button"><span>01</span><h3>Customers</h3><p>Keep buyer contact details organized.</p><small>Open customers →</small></button>
         <article class="feature"><span>02</span><h3>Leads & inquiries</h3><p>Track people interested in buying.</p><small>Coming next</small></article>
         <article class="feature"><span>03</span><h3>Follow-ups</h3><p>Remember who to contact next.</p><small>Coming next</small></article>
         <article class="feature"><span>04</span><h3>Products & orders</h3><p>Keep products and order details together.</p><small>Coming next</small></article>
       </div>
+      <section id="customers-panel" class="customers-panel" hidden>
+        <div class="customers-heading"><div><p class="eyebrow">CUSTOMER DIRECTORY</p><h2>Customers</h2><p class="muted">Save and manage your buyers in one place.</p></div><button id="back-dashboard" class="secondary" type="button">← Dashboard</button></div>
+        <div class="customer-toolbar"><input id="customer-search" type="search" placeholder="Search name, phone, or email…" aria-label="Search customers"><button id="add-customer" class="primary add-customer-button" type="button">+ Add customer</button></div>
+        <form id="customer-form" class="customer-form" hidden><h3 id="customer-form-title">Add customer</h3><input id="customer-id" type="hidden">
+          <div class="customer-fields">
+            <label>Full name *<input id="customer-name" required maxlength="200" placeholder="Customer's full name"></label>
+            <label>Phone number<input id="customer-phone" type="tel" maxlength="80" placeholder="09xx xxx xxxx"></label>
+            <label>Email address<input id="customer-email" type="email" maxlength="254" placeholder="customer@example.com"></label>
+            <label>Messenger name<input id="customer-messenger" maxlength="120" placeholder="Facebook/Messenger name"></label>
+            <label class="field-wide">Address<textarea id="customer-address" rows="2" maxlength="1000" placeholder="Customer address"></textarea></label>
+            <label class="field-wide">Notes<textarea id="customer-notes" rows="3" maxlength="3000" placeholder="Preferences or other details"></textarea></label>
+          </div><div class="customer-form-actions"><button id="cancel-customer" class="secondary" type="button">Cancel</button><button id="save-customer" class="primary" type="submit">Save customer</button></div>
+        </form><div id="customers-message" class="muted customer-message" aria-live="polite"></div><div id="customers-list" class="customers-list"></div>
+      </section>
       <p class="fine-print">This is the initial foundation. Subscription activation and payment verification must be completed on a trusted server before paid plans are offered.</p>
     </section>
     <footer>© <span id="year"></span> BentaBuddy CRM · Built for small businesses</footer>
