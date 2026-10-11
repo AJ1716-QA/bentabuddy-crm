@@ -58,7 +58,7 @@
         <button id="open-customers" class="feature feature-button" type="button"><span>01</span><h3>Customers</h3><p>Keep buyer contact details organized.</p><small>Open customers →</small></button>
         <article class="feature"><span>02</span><h3>Leads & inquiries</h3><p>Track people interested in buying.</p><small>Coming next</small></article>
         <article class="feature"><span>03</span><h3>Follow-ups</h3><p>Remember who to contact next.</p><small>Coming next</small></article>
-        <article class="feature"><span>04</span><h3>Products & orders</h3><p>Keep products and order details together.</p><small>Coming next</small></article>
+        <button id="open-products" class="feature feature-button" type="button"><span>04</span><h3>Products</h3><p>Manage product details, pricing, and SKUs.</p><small>Open products →</small></button>
       </div>
       <section id="customers-panel" class="customers-panel" hidden>
         <div class="customers-heading"><div><p class="eyebrow">CUSTOMER DIRECTORY</p><h2>Customers</h2><p class="muted">Save and manage your buyers in one place.</p></div><button id="back-dashboard" class="secondary" type="button">← Dashboard</button></div>
@@ -73,6 +73,19 @@
             <label class="field-wide">Notes<textarea id="customer-notes" rows="3" maxlength="3000" placeholder="Preferences or other details"></textarea></label>
           </div><div class="customer-form-actions"><button id="cancel-customer" class="secondary" type="button">Cancel</button><button id="save-customer" class="primary" type="submit">Save customer</button></div>
         </form><div id="customers-message" class="muted customer-message" aria-live="polite"></div><div id="customers-list" class="customers-list"></div>
+      </section>
+      <section id="products-panel" class="customers-panel" hidden>
+        <div class="customers-heading"><div><p class="eyebrow">PRODUCT CATALOG</p><h2>Products</h2><p class="muted">Manage product names, SKUs, descriptions, and prices.</p></div><button id="back-products-dashboard" class="secondary" type="button">← Dashboard</button></div>
+        <div class="customer-toolbar"><input id="product-search" type="search" placeholder="Search product name or SKU…" aria-label="Search products"><button id="add-product" class="primary add-customer-button" type="button">+ Add product</button></div>
+        <form id="product-form" class="customer-form" hidden><h3 id="product-form-title">Add product</h3><input id="product-id" type="hidden">
+          <div class="customer-fields">
+            <label>Product name *<input id="product-name" required maxlength="200" placeholder="e.g. Classic T-shirt"></label>
+            <label>SKU / product code<input id="product-sku" maxlength="100" placeholder="Optional code"></label>
+            <label>Selling price (₱) *<input id="product-selling-price" type="number" min="0" step="0.01" required inputmode="decimal" placeholder="0.00"></label>
+            <label>Cost price (₱)<input id="product-cost-price" type="number" min="0" step="0.01" inputmode="decimal" placeholder="0.00"></label>
+            <label class="field-wide">Description<textarea id="product-description" rows="3" maxlength="3000" placeholder="Optional product details"></textarea></label>
+          </div><div class="customer-form-actions"><button id="cancel-product" class="secondary" type="button">Cancel</button><button id="save-product" class="primary" type="submit">Save product</button></div>
+        </form><div id="products-message" class="muted customer-message" aria-live="polite"></div><div id="products-list" class="customers-list"></div>
       </section>
       <p class="fine-print">This is the initial foundation. Subscription activation and payment verification must be completed on a trusted server before paid plans are offered.</p>
     </section>
