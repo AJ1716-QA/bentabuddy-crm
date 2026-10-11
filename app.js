@@ -65,6 +65,58 @@
     });
   }
 
+  let currentBusinessId = null;
+  let customerRows = [];
+  let customerEditMode = false;
+  function showDashboardOnly(){ $("customers-panel").hidden=true; document.querySelector(".section-title").hidden=false; document.querySelector(".feature-grid").hidden=false; }
+  function showCustomersPanel(){ $("customers-panel").hidden=false; document.querySelector(".section-title").hidden=true; document.querySelector(".feature-grid").hidden=true; $("customer-search").value=""; $("customer-form").hidden=true; loadCustomers(); $("customers-panel").scrollIntoView({behavior:"smooth",block:"start"}); }
+  function customerMessage(message,isError=false){const el=$("customers-message");el.textContent=message;el.classList.toggle("customer-error",isError);}
+  function escapeHtml(value){return String(value??"").replace(/[&<>"']/g,ch=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[ch]));}
+  function resetCustomerForm(){$("customer-form").reset();$("customer-id").value="";customerEditMode=false;$("customer-form-title").textContent="Add customer";$("save-customer").textContent="Save customer";$("customer-form").hidden=true;}
+  async function loadCustomers(){
+    if(!supabase||!currentBusinessId){customerMessage("Business details are still loading. Please try again.",true);return;}
+    customerMessage("Loading customers…");$("customers-list").innerHTML="";
+    const {data,error}=await supabase.from("customers").select("id,business_id,full_name,phone,email,messenger_name,address,notes,source,is_archived,created_at,updated_at").eq("business_id",currentBusinessId).eq("is_archived",false).order("full_name",{ascending:true});
+    if(error){console.error("Customer load failed:",error);customerMessage("Could not load customers. Please check the customers table policies.",true);return;}
+    customerRows=data||[];renderCustomers();
+  }
+  function renderCustomers(){
+    const q=$("customer-search").value.trim().toLowerCase();
+    const rows=customerRows.filter(c=>[c.full_name,c.phone,c.email,c.messenger_name,c.address].some(v=>String(v||"").toLowerCase().includes(q)));
+    if(!rows.length){$("customers-list").innerHTML='<div class="empty-customers"><strong>'+(q?"No matching customers":"No customers yet")+'</strong><p>'+(q?"Try another search term.":"Select “Add customer” to save your first customer.")+'</p></div>';customerMessage(q?"No matching customers": "0 customers saved");return;}
+    $("customers-list").innerHTML=rows.map(c=>'<article class="customer-card"><div class="customer-card-main"><div class="customer-avatar">'+escapeHtml((c.full_name||"?").trim().charAt(0).toUpperCase())+'</div><div class="customer-card-details"><h3>'+escapeHtml(c.full_name)+'</h3><p>'+(c.phone?'<span>☎ '+escapeHtml(c.phone)+'</span>':"")+(c.email?'<span>✉ '+escapeHtml(c.email)+'</span>':"")+(c.messenger_name?'<span>Messenger: '+escapeHtml(c.messenger_name)+'</span>':"")+'</p>'+(c.address?'<p class="customer-address">'+escapeHtml(c.address)+'</p>':"")+(c.notes?'<p class="customer-notes">'+escapeHtml(c.notes)+'</p>':"")+'</div></div><div class="customer-actions"><button class="secondary" type="button" data-edit-customer="'+c.id+'">Edit</button><button class="secondary customer-delete" type="button" data-delete-customer="'+c.id+'">Delete</button></div></article>').join("");
+    customerMessage(rows.length+" customer"+(rows.length===1?"":"s")+" shown");
+  }
+  function editCustomer(id){const c=customerRows.find(r=>r.id===id);if(!c)return;$("customer-id").value=c.id;$("customer-name").value=c.full_name||"";$("customer-phone").value=c.phone||"";$("customer-email").value=c.email||"";$("customer-messenger").value=c.messenger_name||"";$("customer-address").value=c.address||"";$("customer-notes").value=c.notes||"";customerEditMode=true;$("customer-form-title").textContent="Edit customer";$("save-customer").textContent="Save changes";$("customer-form").hidden=false;$("customer-form").scrollIntoView({behavior:"smooth",block:"start"});$("customer-name").focus();}
+  $("open-customers").addEventListener("click",showCustomersPanel);
+  $("back-dashboard").addEventListener("click",showDashboardOnly);
+  $("add-customer").addEventListener("click",()=>{resetCustomerForm();$("customer-form").hidden=false;$("customer-form").scrollIntoView({behavior:"smooth",block:"start"});$("customer-name").focus();});
+  $("cancel-customer").addEventListener("click",resetCustomerForm);
+  $("customer-search").addEventListener("input",renderCustomers);
+  $("customers-list").addEventListener("click",async event=>{
+    const edit=event.target.closest("[data-edit-customer]");if(edit){editCustomer(edit.dataset.editCustomer);return;}
+    const del=event.target.closest("[data-delete-customer]");if(!del)return;
+    const id=del.dataset.deleteCustomer,c=customerRows.find(r=>r.id===id);if(!c||!window.confirm("Permanently delete "+c.full_name+"?"))return;
+    del.disabled=true;const {error}=await supabase.from("customers").delete().eq("id",id).eq("business_id",currentBusinessId);
+    if(error){console.error(error);customerMessage("Could not delete this customer. Please check database policies.",true);del.disabled=false;return;}
+    customerRows=customerRows.filter(r=>r.id!==id);renderCustomers();customerMessage("Customer deleted.");
+  });
+  $("customer-form").addEventListener("submit",async event=>{
+    event.preventDefault();if(!supabase||!currentBusinessId){customerMessage("Business details are not ready. Please refresh and try again.",true);return;}
+    const id=$("customer-id").value;
+    const payload={business_id:currentBusinessId,full_name:$("customer-name").value.trim(),phone:$("customer-phone").value.trim()||null,email:$("customer-email").value.trim()||null,messenger_name:$("customer-messenger").value.trim()||null,address:$("customer-address").value.trim()||null,notes:$("customer-notes").value.trim()||null,updated_at:new Date().toISOString()};
+    if(!payload.full_name){$("customer-name").focus();return;}
+    const button=$("save-customer");button.disabled=true;button.textContent="Saving…";
+    try{
+      let result;
+      if(id&&customerEditMode)result=await supabase.from("customers").update(payload).eq("id",id).eq("business_id",currentBusinessId).select("id").single();
+      else result=await supabase.from("customers").insert({...payload,source:"manual",is_archived:false}).select("id").single();
+      if(result.error)throw result.error;
+      resetCustomerForm();await loadCustomers();customerMessage(id?"Customer details updated.":"Customer added successfully.");
+    }catch(err){console.error("Customer save failed:",err);customerMessage(err?.message||"Could not save this customer. Please try again.",true);}
+    finally{button.disabled=false;button.textContent="Save customer";}
+  });
+
   async function loadDashboard(user) {
     showApp();
     $("user-email").textContent = user.email || "";
@@ -80,6 +132,7 @@
       .maybeSingle();
 
     if (businessError || !business) {
+      currentBusinessId = null;
       $("business-title").textContent = "Business setup pending";
       $("plan-title").textContent = "Setup needs attention";
       $("trial-detail").textContent =
@@ -89,6 +142,7 @@
     }
 
     $("business-title").textContent = business.business_name || "My Business";
+    currentBusinessId = business.id;
     const { data: sub, error: subError } = await supabase
       .from("subscriptions")
       .select("plan_code,status,trial_ends_at,current_period_end")
