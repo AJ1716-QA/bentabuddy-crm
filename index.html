@@ -56,7 +56,7 @@
       <h2 class="section-title">Your workspace</h2>
       <div class="feature-grid">
         <button id="open-customers" class="feature feature-button" type="button"><span>01</span><h3>Customers</h3><p>Keep buyer contact details organized.</p><small>Open customers →</small></button>
-        <article class="feature"><span>02</span><h3>Leads & inquiries</h3><p>Track people interested in buying.</p><small>Coming next</small></article>
+        <button id="open-leads" class="feature feature-button" type="button"><span>02</span><h3>Leads & inquiries</h3><p>Track people interested in buying.</p><small>Open leads →</small></button>
         <article class="feature"><span>03</span><h3>Follow-ups</h3><p>Remember who to contact next.</p><small>Coming next</small></article>
         <button id="open-products" class="feature feature-button" type="button"><span>04</span><h3>Products</h3><p>Manage product details, pricing, and SKUs.</p><small>Open products →</small></button>
       </div>
@@ -73,6 +73,23 @@
             <label class="field-wide">Notes<textarea id="customer-notes" rows="3" maxlength="3000" placeholder="Preferences or other details"></textarea></label>
           </div><div class="customer-form-actions"><button id="cancel-customer" class="secondary" type="button">Cancel</button><button id="save-customer" class="primary" type="submit">Save customer</button></div>
         </form><div id="customers-message" class="muted customer-message" aria-live="polite"></div><div id="customers-list" class="customers-list"></div>
+      </section>
+      <section id="leads-panel" class="customers-panel" hidden>
+        <div class="customers-heading"><div><p class="eyebrow">SALES PIPELINE</p><h2>Leads & inquiries</h2><p class="muted">Track potential buyers and the next step toward a sale.</p></div><button id="back-leads-dashboard" class="secondary" type="button">← Dashboard</button></div>
+        <div class="customer-toolbar"><input id="lead-search" type="search" placeholder="Search name, phone, email, or inquiry…" aria-label="Search leads"><button id="add-lead" class="primary add-customer-button" type="button">+ Add lead</button></div>
+        <form id="lead-form" class="customer-form" hidden><h3 id="lead-form-title">Add lead</h3><input id="lead-id" type="hidden">
+          <div class="customer-fields">
+            <label>Contact name *<input id="lead-contact-name" required maxlength="200" placeholder="Potential customer's name"></label>
+            <label>Phone number<input id="lead-phone" type="tel" maxlength="80" placeholder="09xx xxx xxxx"></label>
+            <label>Email address<input id="lead-email" type="email" maxlength="254" placeholder="customer@example.com"></label>
+            <label>Source<input id="lead-source" maxlength="120" placeholder="e.g. Facebook, referral"></label>
+            <label>Stage<select id="lead-stage"><option value="New">New</option><option value="Contacted">Contacted</option><option value="Qualified">Qualified</option><option value="Won">Won</option><option value="Lost">Lost</option></select></label>
+            <label>Estimated value (₱)<input id="lead-value" type="number" min="0" step="0.01" inputmode="decimal" placeholder="0.00"></label>
+            <label class="field-wide">Inquiry / product interested in<input id="lead-inquiry" maxlength="1000" placeholder="What are they asking about?"></label>
+            <label>Next follow-up date and time<input id="lead-follow-up" type="datetime-local"></label>
+            <label class="field-wide">Notes<textarea id="lead-notes" rows="3" maxlength="3000" placeholder="Conversation details or next steps"></textarea></label>
+          </div><div class="customer-form-actions"><button id="cancel-lead" class="secondary" type="button">Cancel</button><button id="save-lead" class="primary" type="submit">Save lead</button></div>
+        </form><div id="leads-message" class="muted customer-message" aria-live="polite"></div><div id="leads-list" class="customers-list"></div>
       </section>
       <section id="products-panel" class="customers-panel" hidden>
         <div class="customers-heading"><div><p class="eyebrow">PRODUCT CATALOG</p><h2>Products</h2><p class="muted">Manage product names, SKUs, descriptions, and prices.</p></div><button id="back-products-dashboard" class="secondary" type="button">← Dashboard</button></div>
