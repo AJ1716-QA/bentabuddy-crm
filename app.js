@@ -403,13 +403,16 @@
     if(error){console.error("Follow-ups load failed:",error);followUpMessage("Could not load follow-ups. Please check the follow_ups table policies.",true);return;}
     followUpRows=data||[];
     const [customersResult,leadsResult]=await Promise.all([
-      supabase.from("customers").select("id,full_name").eq("business_id",currentBusinessId),
-      supabase.from("leads").select("id,contact_name").eq("business_id",currentBusinessId)
+      supabase.from("customers").select("id,full_name,email").eq("business_id",currentBusinessId),
+      supabase.from("leads").select("id,contact_name,email").eq("business_id",currentBusinessId)
     ]);
-    const names={};
-    (customersResult.data||[]).forEach(c=>names["customer:"+c.id]=c.full_name);
-    (leadsResult.data||[]).forEach(l=>names["lead:"+l.id]=l.contact_name);
-    followUpRows=followUpRows.map(f=>({...f,relatedName:f.customer_id?names["customer:"+f.customer_id]:f.lead_id?names["lead:"+f.lead_id]:""}));
+    const contacts={};
+    (customersResult.data||[]).forEach(c=>contacts["customer:"+c.id]={name:c.full_name,email:c.email||""});
+    (leadsResult.data||[]).forEach(l=>contacts["lead:"+l.id]={name:l.contact_name,email:l.email||""});
+    followUpRows=followUpRows.map(f=>{
+      const contact=f.customer_id?contacts["customer:"+f.customer_id]:f.lead_id?contacts["lead:"+f.lead_id]:null;
+      return {...f,relatedName:contact?.name||"",relatedEmail:contact?.email||""};
+    });
     renderFollowUps();
   }
   function renderFollowUps(){
@@ -422,7 +425,8 @@
     const statusLabel={pending:"Pending",completed:"Completed",cancelled:"Cancelled"};
     $("follow-ups-list").innerHTML=rows.map(f=>{
       const overdue=f.status==="pending"&&new Date(f.due_at).getTime()<Date.now();
-      return '<article class="customer-card"><div class="customer-card-main"><div class="product-avatar">⏰</div><div class="customer-card-details"><h3>'+escapeHtml(f.title)+'</h3><p><span class="lead-stage '+(overdue?'follow-up-overdue':'')+'">'+(overdue?'Overdue · ':'')+escapeHtml(statusLabel[f.status]||f.status)+'</span><span><strong>Due:</strong> '+escapeHtml(formatDate(f.due_at))+'</span></p>'+(f.relatedName?'<p class="customer-address"><strong>Linked to:</strong> '+escapeHtml(f.relatedName)+'</p>':'')+(f.notes?'<p class="customer-notes">'+escapeHtml(f.notes)+'</p>':'')+'</div></div><div class="customer-actions">'+(f.status==="pending"?'<button class="secondary" type="button" data-complete-follow-up="'+f.id+'">Mark complete</button>':'')+'<button class="secondary" type="button" data-edit-follow-up="'+f.id+'">Edit</button><button class="secondary customer-delete" type="button" data-delete-follow-up="'+f.id+'">Delete</button></div></article>';
+      const canEmail=!!f.relatedEmail&&/^[^\\s@]+@[^\\s@]+\\.[^\\s@]+$/.test(f.relatedEmail.trim());
+      return '<article class="customer-card"><div class="customer-card-main"><div class="product-avatar">⏰</div><div class="customer-card-details"><h3>'+escapeHtml(f.title)+'</h3><p><span class="lead-stage '+(overdue?'follow-up-overdue':'')+'">'+(overdue?'Overdue · ':'')+escapeHtml(statusLabel[f.status]||f.status)+'</span><span><strong>Due:</strong> '+escapeHtml(formatDate(f.due_at))+'</span></p>'+(f.relatedName?'<p class="customer-address"><strong>Linked to:</strong> '+escapeHtml(f.relatedName)+'</p>':'')+(f.notes?'<p class="customer-notes">'+escapeHtml(f.notes)+'</p>':'')+'</div></div><div class="customer-actions">'+(canEmail?'<button class="secondary" type="button" data-email-follow-up="'+f.id+'">Send email</button>':'')+(f.status==="pending"?'<button class="secondary" type="button" data-complete-follow-up="'+f.id+'">Mark complete</button>':'')+'<button class="secondary" type="button" data-edit-follow-up="'+f.id+'">Edit</button><button class="secondary customer-delete" type="button" data-delete-follow-up="'+f.id+'">Delete</button></div></article>';
     }).join("");
     followUpMessage(rows.length+" follow-up"+(rows.length===1?"":"s")+" shown");
   }
@@ -445,6 +449,21 @@
   $("cancel-follow-up").addEventListener("click",resetFollowUpForm);
   $("follow-up-search").addEventListener("input",renderFollowUps);
   $("follow-ups-list").addEventListener("click",async event=>{
+    const emailButton=event.target.closest("[data-email-follow-up]");
+    if(emailButton){
+      const f=followUpRows.find(r=>r.id===emailButton.dataset.emailFollowUp);
+      if(!f||!f.relatedEmail){followUpMessage("Link this follow-up to a customer or lead with a valid email address.",true);return;}
+      if(!window.confirm("Send this follow-up email to "+f.relatedName+" ("+f.relatedEmail+")?"))return;
+      emailButton.disabled=true;emailButton.textContent="Sending…";
+      const {data,error}=await supabase.functions.invoke("send-followup-email",{body:{followUpId:f.id}});
+      if(error||!data?.success){
+        console.error("Follow-up email failed:",error||data);
+        followUpMessage(data?.error||error?.message||"Could not send the email. Please try again.",true);
+        emailButton.disabled=false;emailButton.textContent="Send email";return;
+      }
+      followUpMessage("Email accepted by Resend for "+f.relatedName+".");
+      emailButton.textContent="Email sent";emailButton.disabled=true;return;
+    }
     const complete=event.target.closest("[data-complete-follow-up]");
     if(complete){
       const id=complete.dataset.completeFollowUp;
