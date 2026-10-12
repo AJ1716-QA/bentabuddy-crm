@@ -335,6 +335,141 @@
     finally{button.disabled=false;button.textContent="Save lead";}
   });
 
+
+  // Follow-ups module: reminders can be linked to a lead or a customer.
+  let followUpRows = [];
+  let followUpEditMode = false;
+  function showDashboardOnly(){
+    $("customers-panel").hidden=true;$("products-panel").hidden=true;$("leads-panel").hidden=true;$("follow-ups-panel").hidden=true;
+    document.querySelector(".section-title").hidden=false;document.querySelector(".feature-grid").hidden=false;
+  }
+  function showCustomersPanel(){
+    $("products-panel").hidden=true;$("leads-panel").hidden=true;$("follow-ups-panel").hidden=true;$("customers-panel").hidden=false;
+    document.querySelector(".section-title").hidden=true;document.querySelector(".feature-grid").hidden=true;
+    $("customer-search").value="";$("customer-form").hidden=true;loadCustomers();
+    $("customers-panel").scrollIntoView({behavior:"smooth",block:"start"});
+  }
+  function showProductsPanel(){
+    $("customers-panel").hidden=true;$("leads-panel").hidden=true;$("follow-ups-panel").hidden=true;$("products-panel").hidden=false;
+    document.querySelector(".section-title").hidden=true;document.querySelector(".feature-grid").hidden=true;
+    $("product-search").value="";$("product-form").hidden=true;loadProducts();
+    $("products-panel").scrollIntoView({behavior:"smooth",block:"start"});
+  }
+  function showLeadsPanel(){
+    $("customers-panel").hidden=true;$("products-panel").hidden=true;$("follow-ups-panel").hidden=true;$("leads-panel").hidden=false;
+    document.querySelector(".section-title").hidden=true;document.querySelector(".feature-grid").hidden=true;
+    $("lead-search").value="";$("lead-form").hidden=true;loadLeads();
+    $("leads-panel").scrollIntoView({behavior:"smooth",block:"start"});
+  }
+  function showFollowUpsPanel(){
+    $("customers-panel").hidden=true;$("products-panel").hidden=true;$("leads-panel").hidden=true;$("follow-ups-panel").hidden=false;
+    document.querySelector(".section-title").hidden=true;document.querySelector(".feature-grid").hidden=true;
+    $("follow-up-search").value="";$("follow-up-form").hidden=true;loadFollowUps();
+    $("follow-ups-panel").scrollIntoView({behavior:"smooth",block:"start"});
+  }
+  function followUpMessage(message,isError=false){
+    const el=$("follow-ups-message");el.textContent=message;el.classList.toggle("customer-error",isError);
+  }
+  function resetFollowUpForm(){
+    $("follow-up-form").reset();$("follow-up-id").value="";followUpEditMode=false;
+    $("follow-up-form-title").textContent="Add follow-up";$("save-follow-up").textContent="Save follow-up";
+    $("follow-up-status").value="pending";$("follow-up-related").value="";$("follow-up-form").hidden=true;
+  }
+  async function loadFollowUpChoices(selectedValue=""){
+    const select=$("follow-up-related");
+    const [customersResult,leadsResult]=await Promise.all([
+      supabase.from("customers").select("id,full_name").eq("business_id",currentBusinessId).eq("is_archived",false).order("full_name",{ascending:true}),
+      supabase.from("leads").select("id,contact_name").eq("business_id",currentBusinessId).eq("is_archived",false).order("contact_name",{ascending:true})
+    ]);
+    if(customersResult.error) console.warn("Follow-up customer choices failed:",customersResult.error);
+    if(leadsResult.error) console.warn("Follow-up lead choices failed:",leadsResult.error);
+    const options=['<option value="">No linked record</option>'];
+    (customersResult.data||[]).forEach(c=>options.push('<option value="customer:'+escapeHtml(c.id)+'">Customer: '+escapeHtml(c.full_name)+'</option>'));
+    (leadsResult.data||[]).forEach(l=>options.push('<option value="lead:'+escapeHtml(l.id)+'">Lead: '+escapeHtml(l.contact_name)+'</option>'));
+    select.innerHTML=options.join("");
+    select.value=selectedValue;
+  }
+  async function loadFollowUps(){
+    if(!supabase||!currentBusinessId){followUpMessage("Business details are still loading. Please try again.",true);return;}
+    followUpMessage("Loading follow-ups…");$("follow-ups-list").innerHTML="";
+    const {data,error}=await supabase.from("follow_ups")
+      .select("id,business_id,customer_id,lead_id,title,notes,due_at,status,completed_at,created_at,updated_at")
+      .eq("business_id",currentBusinessId).order("due_at",{ascending:true});
+    if(error){console.error("Follow-ups load failed:",error);followUpMessage("Could not load follow-ups. Please check the follow_ups table policies.",true);return;}
+    followUpRows=data||[];
+    const [customersResult,leadsResult]=await Promise.all([
+      supabase.from("customers").select("id,full_name").eq("business_id",currentBusinessId),
+      supabase.from("leads").select("id,contact_name").eq("business_id",currentBusinessId)
+    ]);
+    const names={};
+    (customersResult.data||[]).forEach(c=>names["customer:"+c.id]=c.full_name);
+    (leadsResult.data||[]).forEach(l=>names["lead:"+l.id]=l.contact_name);
+    followUpRows=followUpRows.map(f=>({...f,relatedName:f.customer_id?names["customer:"+f.customer_id]:f.lead_id?names["lead:"+f.lead_id]:""}));
+    renderFollowUps();
+  }
+  function renderFollowUps(){
+    const q=$("follow-up-search").value.trim().toLowerCase();
+    const rows=followUpRows.filter(f=>[f.title,f.notes,f.status,f.relatedName].some(v=>String(v||"").toLowerCase().includes(q)));
+    if(!rows.length){
+      $("follow-ups-list").innerHTML='<div class="empty-customers"><strong>'+(q?"No matching follow-ups":"No follow-ups yet")+'</strong><p>'+(q?"Try another search term.":"Select “Add follow-up” to create a reminder.")+'</p></div>';
+      followUpMessage(q?"No matching follow-ups":"0 follow-ups saved");return;
+    }
+    const statusLabel={pending:"Pending",completed:"Completed",cancelled:"Cancelled"};
+    $("follow-ups-list").innerHTML=rows.map(f=>{
+      const overdue=f.status==="pending"&&new Date(f.due_at).getTime()<Date.now();
+      return '<article class="customer-card"><div class="customer-card-main"><div class="product-avatar">⏰</div><div class="customer-card-details"><h3>'+escapeHtml(f.title)+'</h3><p><span class="lead-stage '+(overdue?'follow-up-overdue':'')+'">'+(overdue?'Overdue · ':'')+escapeHtml(statusLabel[f.status]||f.status)+'</span><span><strong>Due:</strong> '+escapeHtml(formatDate(f.due_at))+'</span></p>'+(f.relatedName?'<p class="customer-address"><strong>Linked to:</strong> '+escapeHtml(f.relatedName)+'</p>':'')+(f.notes?'<p class="customer-notes">'+escapeHtml(f.notes)+'</p>':'')+'</div></div><div class="customer-actions"><button class="secondary" type="button" data-edit-follow-up="'+f.id+'">Edit</button><button class="secondary customer-delete" type="button" data-delete-follow-up="'+f.id+'">Delete</button></div></article>';
+    }).join("");
+    followUpMessage(rows.length+" follow-up"+(rows.length===1?"":"s")+" shown");
+  }
+  async function editFollowUp(id){
+    const f=followUpRows.find(r=>r.id===id);if(!f)return;
+    $("follow-up-id").value=f.id;$("follow-up-title").value=f.title||"";$("follow-up-due-at").value=localDateTime(f.due_at);
+    $("follow-up-status").value=["pending","completed","cancelled"].includes(f.status)?f.status:"pending";
+    $("follow-up-notes").value=f.notes||"";
+    const linkedValue=f.customer_id?"customer:"+f.customer_id:f.lead_id?"lead:"+f.lead_id:"";
+    await loadFollowUpChoices(linkedValue);
+    followUpEditMode=true;$("follow-up-form-title").textContent="Edit follow-up";$("save-follow-up").textContent="Save changes";
+    $("follow-up-form").hidden=false;$("follow-up-form").scrollIntoView({behavior:"smooth",block:"start"});$("follow-up-title").focus();
+  }
+  $("open-follow-ups").addEventListener("click",showFollowUpsPanel);
+  $("back-follow-ups-dashboard").addEventListener("click",showDashboardOnly);
+  $("add-follow-up").addEventListener("click",async()=>{
+    resetFollowUpForm();await loadFollowUpChoices();$("follow-up-due-at").value=localDateTime(new Date(Date.now()+60*60*1000).toISOString());
+    $("follow-up-form").hidden=false;$("follow-up-form").scrollIntoView({behavior:"smooth",block:"start"});$("follow-up-title").focus();
+  });
+  $("cancel-follow-up").addEventListener("click",resetFollowUpForm);
+  $("follow-up-search").addEventListener("input",renderFollowUps);
+  $("follow-ups-list").addEventListener("click",async event=>{
+    const edit=event.target.closest("[data-edit-follow-up]");if(edit){await editFollowUp(edit.dataset.editFollowUp);return;}
+    const del=event.target.closest("[data-delete-follow-up]");if(!del)return;
+    const id=del.dataset.deleteFollowUp,f=followUpRows.find(r=>r.id===id);
+    if(!f||!window.confirm("Permanently delete follow-up “"+f.title+"”?"))return;
+    del.disabled=true;
+    const {error}=await supabase.from("follow_ups").delete().eq("id",id).eq("business_id",currentBusinessId);
+    if(error){console.error(error);followUpMessage("Could not delete this follow-up. Please check database policies.",true);del.disabled=false;return;}
+    followUpRows=followUpRows.filter(r=>r.id!==id);renderFollowUps();followUpMessage("Follow-up deleted.");
+  });
+  $("follow-up-form").addEventListener("submit",async event=>{
+    event.preventDefault();
+    if(!supabase||!currentBusinessId){followUpMessage("Business details are not ready. Please refresh and try again.",true);return;}
+    const id=$("follow-up-id").value,title=$("follow-up-title").value.trim(),dueRaw=$("follow-up-due-at").value;
+    if(!title||!dueRaw){followUpMessage("Enter a title and due date/time.",true);return;}
+    const related=$("follow-up-related").value;
+    const customerId=related.startsWith("customer:")?related.slice(9):null;
+    const leadId=related.startsWith("lead:")?related.slice(5):null;
+    const status=$("follow-up-status").value;
+    const payload={business_id:currentBusinessId,customer_id:customerId,lead_id:leadId,title,notes:$("follow-up-notes").value.trim()||null,due_at:new Date(dueRaw).toISOString(),status,completed_at:status==="completed"?new Date().toISOString():null,updated_at:new Date().toISOString()};
+    const button=$("save-follow-up");button.disabled=true;button.textContent="Saving…";
+    try{
+      let result;
+      if(id&&followUpEditMode)result=await supabase.from("follow_ups").update(payload).eq("id",id).eq("business_id",currentBusinessId).select("id").single();
+      else result=await supabase.from("follow_ups").insert(payload).select("id").single();
+      if(result.error)throw result.error;
+      resetFollowUpForm();await loadFollowUps();followUpMessage(id?"Follow-up updated.":"Follow-up added successfully.");
+    }catch(err){console.error("Follow-up save failed:",err);followUpMessage(err?.message||"Could not save this follow-up. Please try again.",true);}
+    finally{button.disabled=false;button.textContent="Save follow-up";}
+  });
+
   async function loadDashboard(user) {
     showApp();
     $("user-email").textContent = user.email || "";
