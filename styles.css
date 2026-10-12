@@ -20,3 +20,5 @@ select:focus{border-color:var(--blue);box-shadow:0 0 0 3px #2457a71a}
 
 /* Ensure hidden panels stay hidden even when component styles are applied. */
 [hidden]{display:none!important}
+
+.store-toggle-label{display:flex;align-items:center;gap:10px}.store-toggle-label input{width:20px;height:20px;margin:0;flex:0 0 auto}.store-settings-message{overflow-wrap:anywhere}
