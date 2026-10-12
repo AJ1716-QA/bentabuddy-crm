@@ -61,6 +61,7 @@
         <button id="open-products" class="feature feature-button" type="button"><span>04</span><h3>Products</h3><p>Manage product details, pricing, and SKUs.</p><small>Open products →</small></button>
         <button id="open-orders" class="feature feature-button" type="button"><span>05</span><h3>Orders & payments</h3><p>Create sales orders and track money received.</p><small>Open orders →</small></button>
         <button id="open-sales-overview" class="feature feature-button" type="button"><span>06</span><h3>Sales Overview</h3><p>Review sales, collections, and outstanding balances.</p><small>Open sales overview →</small></button>
+        <button id="open-profit-overview" class="feature feature-button" type="button"><span>07</span><h3>Profit Overview</h3><p>Review product costs, gross profit, and margins.</p><small>Open profit overview →</small></button>
       </div>
       <section id="customers-panel" class="customers-panel" hidden>
         <div class="customers-heading"><div><p class="eyebrow">CUSTOMER DIRECTORY</p><h2>Customers</h2><p class="muted">Save and manage your buyers in one place.</p></div><button id="back-dashboard" class="secondary" type="button">← Dashboard</button></div>
@@ -166,6 +167,18 @@
           <article class="sales-metric"><span>Outstanding balance</span><strong id="sales-metric-balance">₱0.00</strong><small>On eligible orders placed in period</small></article>
         </div>
         <div class="sales-overview-section"><h3>Order status breakdown</h3><div id="sales-status-breakdown" class="sales-status-breakdown"></div></div>
+      </section>
+      <section id="profit-overview-panel" class="customers-panel" hidden>
+        <div class="customers-heading"><div><p class="eyebrow">BUSINESS PERFORMANCE</p><h2>Profit Overview</h2><p class="muted">Estimate gross profit using the saved cost of each item in each order.</p></div><button id="back-profit-dashboard" class="secondary" type="button">← Dashboard</button></div>
+        <div class="sales-overview-toolbar"><label for="profit-period">Reporting period</label><select id="profit-period"><option value="7">Last 7 days</option><option value="30" selected>Last 30 days</option><option value="month">This month</option><option value="all">All time</option></select><button id="refresh-profit-overview" class="secondary" type="button">Refresh</button></div>
+        <div id="profit-overview-message" class="muted customer-message" aria-live="polite">Choose a period to review gross profit.</div>
+        <div class="sales-metric-grid">
+          <article class="sales-metric"><span>Product sales</span><strong id="profit-metric-sales">₱0.00</strong><small>Order item totals after item discounts</small></article>
+          <article class="sales-metric"><span>Product costs</span><strong id="profit-metric-costs">₱0.00</strong><small>Saved unit cost × quantity</small></article>
+          <article class="sales-metric"><span>Gross profit</span><strong id="profit-metric-gross">₱0.00</strong><small>Product sales minus product costs</small></article>
+          <article class="sales-metric"><span>Gross margin</span><strong id="profit-metric-margin">0.0%</strong><small>Gross profit ÷ product sales</small></article>
+        </div>
+        <div class="sales-overview-section"><h3>How this is calculated</h3><p class="muted">Cancelled, returned, and refunded orders are excluded. Product sales use saved order-item line totals; product costs use each order item's saved unit cost, so later product cost changes do not rewrite historical estimates. Delivery fees and general operating expenses are not included. This is gross profit, not net profit.</p></div>
       </section>
       <p class="fine-print">This is the initial foundation. Subscription activation and payment verification must be completed on a trusted server before paid plans are offered.</p>
     </section>
