@@ -902,10 +902,14 @@
   });
 
   if ("serviceWorker" in navigator && location.protocol.startsWith("http")) {
-    window.addEventListener("load", () => {
-      navigator.serviceWorker.register("./sw.js").catch((err) => {
-        console.warn("Service worker registration failed:", err);
-      });
+    window.addEventListener("load", async () => {
+      try {
+        const registration = await navigator.serviceWorker.register("./sw.js", { updateViaCache: "none" });
+        // Check for a newer app shell whenever the PWA opens, including on mobile.
+        await registration.update();
+      } catch (err) {
+        console.warn("Service worker registration/update failed:", err);
+      }
     });
   }
   setMode("login");
