@@ -57,7 +57,7 @@
       <div class="feature-grid">
         <button id="open-customers" class="feature feature-button" type="button"><span>01</span><h3>Customers</h3><p>Keep buyer contact details organized.</p><small>Open customers →</small></button>
         <button id="open-leads" class="feature feature-button" type="button"><span>02</span><h3>Leads & inquiries</h3><p>Track people interested in buying.</p><small>Open leads →</small></button>
-        <article class="feature"><span>03</span><h3>Follow-ups</h3><p>Remember who to contact next.</p><small>Coming next</small></article>
+        <button id="open-follow-ups" class="feature feature-button" type="button"><span>03</span><h3>Follow-ups</h3><p>Remember who to contact next.</p><small>Open follow-ups →</small></button>
         <button id="open-products" class="feature feature-button" type="button"><span>04</span><h3>Products</h3><p>Manage product details, pricing, and SKUs.</p><small>Open products →</small></button>
       </div>
       <section id="customers-panel" class="customers-panel" hidden>
@@ -90,6 +90,19 @@
             <label class="field-wide">Notes<textarea id="lead-notes" rows="3" maxlength="3000" placeholder="Conversation details or next steps"></textarea></label>
           </div><div class="customer-form-actions"><button id="cancel-lead" class="secondary" type="button">Cancel</button><button id="save-lead" class="primary" type="submit">Save lead</button></div>
         </form><div id="leads-message" class="muted customer-message" aria-live="polite"></div><div id="leads-list" class="customers-list"></div>
+      </section>
+      <section id="follow-ups-panel" class="customers-panel" hidden>
+        <div class="customers-heading"><div><p class="eyebrow">REMINDER TRACKER</p><h2>Follow-ups</h2><p class="muted">Keep track of the people you need to contact next.</p></div><button id="back-follow-ups-dashboard" class="secondary" type="button">← Dashboard</button></div>
+        <div class="customer-toolbar"><input id="follow-up-search" type="search" placeholder="Search title, person, or notes…" aria-label="Search follow-ups"><button id="add-follow-up" class="primary add-customer-button" type="button">+ Add follow-up</button></div>
+        <form id="follow-up-form" class="customer-form" hidden><h3 id="follow-up-form-title">Add follow-up</h3><input id="follow-up-id" type="hidden">
+          <div class="customer-fields">
+            <label>Reminder title *<input id="follow-up-title" required maxlength="200" placeholder="e.g. Ask if they want to order"></label>
+            <label>Due date and time *<input id="follow-up-due-at" type="datetime-local" required></label>
+            <label>Link to lead or customer<select id="follow-up-related"><option value="">No linked record</option></select></label>
+            <label>Status<select id="follow-up-status"><option value="pending">Pending</option><option value="completed">Completed</option><option value="cancelled">Cancelled</option></select></label>
+            <label class="field-wide">Notes<textarea id="follow-up-notes" rows="3" maxlength="3000" placeholder="What should you remember to ask or tell them?"></textarea></label>
+          </div><div class="customer-form-actions"><button id="cancel-follow-up" class="secondary" type="button">Cancel</button><button id="save-follow-up" class="primary" type="submit">Save follow-up</button></div>
+        </form><div id="follow-ups-message" class="muted customer-message" aria-live="polite"></div><div id="follow-ups-list" class="customers-list"></div>
       </section>
       <section id="products-panel" class="customers-panel" hidden>
         <div class="customers-heading"><div><p class="eyebrow">PRODUCT CATALOG</p><h2>Products</h2><p class="muted">Manage product names, SKUs, descriptions, and prices.</p></div><button id="back-products-dashboard" class="secondary" type="button">← Dashboard</button></div>
