@@ -73,7 +73,26 @@
     .order-success h2{margin:0 0 10px;color:#17613a}.order-success p{line-height:1.6}
     @media(max-width:720px){.store-section{padding:15px}.cart-line{grid-template-columns:minmax(0,1fr) auto;gap:8px}.cart-line>strong{grid-column:1/-1;text-align:right}.quantity-control{gap:6px}.quantity-control .remove-item{font-size:11px}}
     @media(max-width:430px){.checkout-grid{grid-template-columns:1fr}.checkout-field.full{grid-column:auto}.checkout-actions{flex-direction:column}.cart-top{align-items:flex-start}}
-\n  </style>
+
+
+    /* Storefront layout override: keep header and catalogue in their own rows */
+    body.store-page .store-shell{display:block!important;width:100%!important;max-width:1200px!important;margin:0 auto!important;padding:28px 24px 48px!important}
+    body.store-page .store-topbar{display:flex!important;flex-direction:row!important;align-items:center!important;justify-content:space-between!important;gap:16px!important;width:100%!important;margin:0 0 8px!important}
+    body.store-page .store-brand{display:block!important;flex:1 1 auto!important;font-size:clamp(24px,3vw,34px)!important;line-height:1.2!important}
+    body.store-page .store-cart-wrap{display:block!important;flex:0 0 auto!important}
+    body.store-page .store-header{display:block!important;width:100%!important;margin:0 0 22px!important;padding:0!important}
+    body.store-page .store-header p{display:block!important;margin:0!important;font-size:16px!important;line-height:1.6!important}
+    body.store-page #store-shopping{display:block!important;width:100%!important}
+    body.store-page #store-products.store-grid{display:grid!important;width:100%!important;grid-template-columns:repeat(4,minmax(0,1fr))!important;gap:18px!important;align-items:stretch!important}
+    body.store-page #store-products[hidden]{display:none!important}
+    body.store-page .store-product{display:flex!important;flex-direction:column!important;width:100%!important;min-width:0!important;height:100%!important}
+    body.store-page .store-product-content{display:flex!important;flex-direction:column!important;align-items:stretch!important;flex:1 1 auto!important;min-width:0!important;padding:16px!important}
+    body.store-page .store-product .store-button.primary{display:block!important;width:100%!important;margin:16px 0 0!important;white-space:normal!important;word-break:normal!important;overflow-wrap:normal!important;line-height:1.35!important;padding:12px 10px!important}
+    @media(max-width:900px){body.store-page #store-products.store-grid{grid-template-columns:repeat(3,minmax(0,1fr))!important;gap:12px!important}}
+    @media(max-width:720px){body.store-page .store-shell{padding:16px 12px 32px!important}body.store-page #store-products.store-grid{grid-template-columns:repeat(2,minmax(0,1fr))!important;gap:10px!important}body.store-page .store-product-content{padding:12px!important}}
+    @media(max-width:380px){body.store-page #store-products.store-grid{grid-template-columns:repeat(2,minmax(0,1fr))!important;gap:8px!important}body.store-page .store-product-content{padding:9px!important}body.store-page .store-product .store-button.primary{font-size:13px!important;padding:10px 6px!important}}
+
+  </style>
 </head>
 <body class="store-page">
   <main class="store-shell">
@@ -95,6 +114,6 @@
     <footer class="store-footer">Powered by BentaBuddy CRM</footer>
   </main>
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
-  <script src="./store.js?v=20261012-store-layout-fix-2"></script>
+  <script src="./store.js?v=20261012-store-layout-fix-3"></script>
 </body>
 </html>
