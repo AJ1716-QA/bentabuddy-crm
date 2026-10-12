@@ -340,7 +340,7 @@
   let followUpRows = [];
   let followUpEditMode = false;
   function showDashboardOnly(){
-    $("customers-panel").hidden=true;$("products-panel").hidden=true;$("leads-panel").hidden=true;$("follow-ups-panel").hidden=true;$("orders-panel").hidden=true;$("order-payment-panel").hidden=true;$("sales-overview-panel").hidden=true;
+    $("customers-panel").hidden=true;$("products-panel").hidden=true;$("leads-panel").hidden=true;$("follow-ups-panel").hidden=true;$("orders-panel").hidden=true;$("order-payment-panel").hidden=true;$("sales-overview-panel").hidden=true;$("profit-overview-panel").hidden=true;
     document.querySelector(".section-title").hidden=false;document.querySelector(".feature-grid").hidden=false;
   }
   function showCustomersPanel(){
@@ -698,7 +698,56 @@
   $("open-sales-overview").addEventListener("click",showSalesOverviewPanel);
   $("back-sales-dashboard").addEventListener("click",showDashboardOnly);
   $("sales-period").addEventListener("change",loadSalesOverview);
+
   $("refresh-sales-overview").addEventListener("click",loadSalesOverview);
+
+  function profitOverviewMessage(message,isError=false){
+    const el=$("profit-overview-message");el.textContent=message;el.classList.toggle("customer-error",isError);
+  }
+  async function loadProfitOverview(){
+    if(!supabase||!currentBusinessId){profitOverviewMessage("Business details are still loading. Please try again.",true);return;}
+    const refresh=$("refresh-profit-overview");refresh.disabled=true;refresh.textContent="Loading…";
+    profitOverviewMessage("Loading profit data…");
+    try{
+      const [ordersResult,itemsResult]=await Promise.all([
+        supabase.from("orders").select("id,order_date,status,payment_status,is_archived").eq("business_id",currentBusinessId).eq("is_archived",false),
+        supabase.from("order_items").select("order_id,quantity,unit_price,unit_cost,line_discount,line_total").eq("business_id",currentBusinessId)
+      ]);
+      if(ordersResult.error)throw ordersResult.error;
+      if(itemsResult.error)throw itemsResult.error;
+      const period=$("profit-period").value,start=salesPeriodStart(period),now=new Date();
+      const inRange=value=>{const d=new Date(value);return !Number.isNaN(d.getTime())&&(!start||d>=start)&&d<=now;};
+      const eligible=new Set((ordersResult.data||[]).filter(o=>inRange(o.order_date)&&!["cancelled","returned"].includes(String(o.status||"").toLowerCase())&&String(o.payment_status||"").toLowerCase()!=="refunded").map(o=>o.id));
+      let sales=0,costs=0;
+      (itemsResult.data||[]).filter(item=>eligible.has(item.order_id)).forEach(item=>{
+        const quantity=Number(item.quantity)||0;
+        const lineTotal=item.line_total==null?Math.max(0,quantity*(Number(item.unit_price)||0)-(Number(item.line_discount)||0)):Math.max(0,Number(item.line_total)||0);
+        sales+=lineTotal;
+        costs+=Math.max(0,quantity*(Number(item.unit_cost)||0));
+      });
+      const gross=sales-costs,margin=sales>0?(gross/sales)*100:0;
+      $("profit-metric-sales").textContent=money(sales);
+      $("profit-metric-costs").textContent=money(costs);
+      $("profit-metric-gross").textContent=money(gross);
+      $("profit-metric-margin").textContent=margin.toFixed(1)+"%";
+      const label=period==="all"?"all time":period==="month"?"this month":"the last "+period+" days";
+      profitOverviewMessage("Showing "+label+". Figures are gross product profit estimates before delivery costs and operating expenses.");
+    }catch(err){
+      console.error("Profit Overview load failed:",err);
+      profitOverviewMessage(err?.message||"Could not load profit data. Please check the orders and order_items table policies.",true);
+    }finally{refresh.disabled=false;refresh.textContent="Refresh";}
+  }
+  function showProfitOverviewPanel(){
+    orderPanelHideAll();
+    $("profit-overview-panel").hidden=false;
+    document.querySelector(".section-title").hidden=true;document.querySelector(".feature-grid").hidden=true;
+    loadProfitOverview();
+    $("profit-overview-panel").scrollIntoView({behavior:"smooth",block:"start"});
+  }
+  $("open-profit-overview").addEventListener("click",showProfitOverviewPanel);
+  $("back-profit-dashboard").addEventListener("click",showDashboardOnly);
+  $("profit-period").addEventListener("change",loadProfitOverview);
+  $("refresh-profit-overview").addEventListener("click",loadProfitOverview);
 
   async function loadDashboard(user) {
     showApp();
