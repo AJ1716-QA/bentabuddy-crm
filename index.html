@@ -46,8 +46,13 @@
     <section id="app-panel" hidden>
       <div class="welcome-row">
         <div><p class="eyebrow">YOUR BUSINESS</p><h2 id="business-title">My Business</h2><p id="user-email" class="muted"></p></div>
-        <button id="logout-button" class="secondary" type="button">Log out</button>
+        <div class="welcome-actions"><button id="notification-bell" class="secondary notification-bell" type="button" aria-label="Open notifications" aria-expanded="false">♧ <span>Notifications</span><b id="notification-count" hidden>0</b></button><button id="logout-button" class="secondary" type="button">Log out</button></div>
       </div>
+      <section id="notifications-panel" class="customers-panel notifications-panel" hidden>
+        <div class="customers-heading"><div><p class="eyebrow">UPDATES</p><h2>Notifications</h2><p class="muted">New orders from your online store appear here.</p></div><button id="back-notifications-dashboard" class="secondary" type="button">← Dashboard</button></div>
+        <div id="notifications-message" class="muted customer-message" aria-live="polite">Loading notifications…</div>
+        <div id="notifications-list" class="notifications-list"></div>
+      </section>
       <div class="trial-card">
         <div><p class="eyebrow">YOUR PLAN</p><h3 id="plan-title">Checking trial…</h3><p id="trial-detail" class="muted">Loading subscription status.</p></div>
         <div id="plan-icon" class="plan-icon">✓</div>
