@@ -749,6 +749,19 @@
   $("profit-period").addEventListener("change",loadProfitOverview);
   $("refresh-profit-overview").addEventListener("click",loadProfitOverview);
 
+  function updateStorePublicLink(slug,enabled){
+    const wrap=$("store-public-link"),link=$("store-public-url");
+    if(!slug||!enabled){wrap.hidden=true;link.removeAttribute("href");link.textContent="";return;}
+    const url=new URL("./store.html",location.href);
+    url.searchParams.set("store",slug);
+    link.href=url.href;link.textContent=url.href;wrap.hidden=false;
+  }
+  $("copy-store-public-url").addEventListener("click",async()=>{
+    const link=$("store-public-url");
+    if(!link.href)return;
+    try{await navigator.clipboard.writeText(link.href);storeSettingsMessage("Public store link copied.");}
+    catch{storeSettingsMessage("Copy is unavailable in this browser. Select and copy the store link above.",true);}
+  });
   function storeSettingsMessage(message,isError=false){
     const el=$("store-settings-message");el.textContent=message;el.classList.toggle("customer-error",isError);
   }
@@ -774,7 +787,8 @@
     try{
       const {error}=await supabase.from("businesses").update({store_slug:slug||null,storefront_enabled:enabled,updated_at:new Date().toISOString()}).eq("id",currentBusinessId);
       if(error)throw error;
-      storeSettingsMessage("Store settings saved. The public storefront page will be connected in the next step.");
+      updateStorePublicLink(slug,enabled);
+      storeSettingsMessage("Store settings saved.");
     }catch(err){
       console.error("Store settings save failed:",err);
       storeSettingsMessage(err?.code==="23505"?"That store address is already in use. Choose another one.":(err?.message||"Could not save store settings. Please try again."),true);
@@ -810,6 +824,7 @@
     $("store-slug").value = business.store_slug || "";
     $("storefront-enabled").checked = business.storefront_enabled === true;
     $("store-settings-message").textContent = "";
+    updateStorePublicLink(business.store_slug, business.storefront_enabled);
     const { data: sub, error: subError } = await supabase
       .from("subscriptions")
       .select("plan_code,status,trial_ends_at,current_period_end")
