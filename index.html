@@ -132,6 +132,8 @@
             <label>Selling price (₱) *<input id="product-selling-price" type="number" min="0" step="0.01" required inputmode="decimal" placeholder="0.00"></label>
             <label>Cost price (₱)<input id="product-cost-price" type="number" min="0" step="0.01" inputmode="decimal" placeholder="0.00"></label>
             <label class="field-wide">Description<textarea id="product-description" rows="3" maxlength="3000" placeholder="Optional product details"></textarea></label>
+            <label class="field-wide">Product image URL<input id="product-image-url" type="url" maxlength="2000" inputmode="url" placeholder="https://…"><small class="muted">Use a publicly accessible image URL.</small></label>
+            <label class="field-wide store-toggle-label"><input id="product-published" type="checkbox"> Publish this product in my online store</label>
           </div><div class="customer-form-actions"><button id="cancel-product" class="secondary" type="button">Cancel</button><button id="save-product" class="primary" type="submit">Save product</button></div>
         </form><div id="products-message" class="muted customer-message" aria-live="polite"></div><div id="products-list" class="customers-list"></div>
       </section>
