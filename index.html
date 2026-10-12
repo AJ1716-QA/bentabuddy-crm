@@ -60,6 +60,7 @@
         <button id="open-follow-ups" class="feature feature-button" type="button"><span>03</span><h3>Follow-ups</h3><p>Remember who to contact next.</p><small>Open follow-ups →</small></button>
         <button id="open-products" class="feature feature-button" type="button"><span>04</span><h3>Products</h3><p>Manage product details, pricing, and SKUs.</p><small>Open products →</small></button>
         <button id="open-orders" class="feature feature-button" type="button"><span>05</span><h3>Orders & payments</h3><p>Create sales orders and track money received.</p><small>Open orders →</small></button>
+        <button id="open-sales-overview" class="feature feature-button" type="button"><span>06</span><h3>Sales Overview</h3><p>Review sales, collections, and outstanding balances.</p><small>Open sales overview →</small></button>
       </div>
       <section id="customers-panel" class="customers-panel" hidden>
         <div class="customers-heading"><div><p class="eyebrow">CUSTOMER DIRECTORY</p><h2>Customers</h2><p class="muted">Save and manage your buyers in one place.</p></div><button id="back-dashboard" class="secondary" type="button">← Dashboard</button></div>
@@ -153,6 +154,18 @@
             <label class="field-wide">Notes<textarea id="payment-notes" rows="2" maxlength="2000" placeholder="Optional payment details"></textarea></label>
           </div><div class="customer-form-actions"><button id="cancel-payment" class="secondary" type="button">Clear</button><button id="save-payment" class="primary" type="submit">Save payment</button></div>
         </form>
+      </section>
+      <section id="sales-overview-panel" class="customers-panel" hidden>
+        <div class="customers-heading"><div><p class="eyebrow">BUSINESS PERFORMANCE</p><h2>Sales Overview</h2><p class="muted">Track order value, payments collected, and balances.</p></div><button id="back-sales-dashboard" class="secondary" type="button">← Dashboard</button></div>
+        <div class="sales-overview-toolbar"><label for="sales-period">Reporting period</label><select id="sales-period"><option value="7">Last 7 days</option><option value="30" selected>Last 30 days</option><option value="month">This month</option><option value="all">All time</option></select><button id="refresh-sales-overview" class="secondary" type="button">Refresh</button></div>
+        <div id="sales-overview-message" class="muted customer-message" aria-live="polite">Choose a period to review your sales.</div>
+        <div class="sales-metric-grid">
+          <article class="sales-metric"><span>Sales value</span><strong id="sales-metric-value">₱0.00</strong><small>Eligible orders placed in period</small></article>
+          <article class="sales-metric"><span>Orders</span><strong id="sales-metric-orders">0</strong><small>Excludes cancelled and returned</small></article>
+          <article class="sales-metric"><span>Payments received</span><strong id="sales-metric-collected">₱0.00</strong><small>Payments recorded in period</small></article>
+          <article class="sales-metric"><span>Outstanding balance</span><strong id="sales-metric-balance">₱0.00</strong><small>On eligible orders placed in period</small></article>
+        </div>
+        <div class="sales-overview-section"><h3>Order status breakdown</h3><div id="sales-status-breakdown" class="sales-status-breakdown"></div></div>
       </section>
       <p class="fine-print">This is the initial foundation. Subscription activation and payment verification must be completed on a trusted server before paid plans are offered.</p>
     </section>
