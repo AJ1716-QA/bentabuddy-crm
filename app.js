@@ -901,6 +901,28 @@
     }
   });
 
+  // Mobile device/browser Back should return from an open module to the dashboard.
+  // Keep only one in-app history entry while switching between dashboard modules.
+  function rememberModuleNavigation() {
+    if (!history.state || history.state.bentaBuddyModule !== true) {
+      history.pushState({ ...(history.state || {}), bentaBuddyModule: true }, "", location.href);
+    }
+  }
+  const dashboardGrid = document.querySelector(".feature-grid");
+  if (dashboardGrid) {
+    dashboardGrid.addEventListener("click", (event) => {
+      if (event.target.closest(".feature-button")) rememberModuleNavigation();
+    });
+  }
+  window.addEventListener("popstate", () => {
+    // The browser Back action returns to the app's dashboard instead of leaving
+    // the current module visible on top of another module.
+    if (!history.state || history.state.bentaBuddyModule !== true) {
+      showDashboardOnly();
+      window.scrollTo({ top: 0, behavior: "smooth" });
+    }
+  });
+
   if ("serviceWorker" in navigator && location.protocol.startsWith("http")) {
     window.addEventListener("load", async () => {
       try {
