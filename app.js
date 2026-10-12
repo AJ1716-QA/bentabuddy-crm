@@ -340,7 +340,7 @@
   let followUpRows = [];
   let followUpEditMode = false;
   function showDashboardOnly(){
-    $("customers-panel").hidden=true;$("products-panel").hidden=true;$("leads-panel").hidden=true;$("follow-ups-panel").hidden=true;$("orders-panel").hidden=true;$("order-payment-panel").hidden=true;
+    $("customers-panel").hidden=true;$("products-panel").hidden=true;$("leads-panel").hidden=true;$("follow-ups-panel").hidden=true;$("orders-panel").hidden=true;$("order-payment-panel").hidden=true;$("sales-overview-panel").hidden=true;
     document.querySelector(".section-title").hidden=false;document.querySelector(".feature-grid").hidden=false;
   }
   function showCustomersPanel(){
@@ -350,19 +350,19 @@
     $("customers-panel").scrollIntoView({behavior:"smooth",block:"start"});
   }
   function showProductsPanel(){
-    $("customers-panel").hidden=true;$("leads-panel").hidden=true;$("follow-ups-panel").hidden=true;$("orders-panel").hidden=true;$("order-payment-panel").hidden=true;$("products-panel").hidden=false;
+    $("customers-panel").hidden=true;$("leads-panel").hidden=true;$("follow-ups-panel").hidden=true;$("orders-panel").hidden=true;$("order-payment-panel").hidden=true;$("sales-overview-panel").hidden=true;$("products-panel").hidden=false;
     document.querySelector(".section-title").hidden=true;document.querySelector(".feature-grid").hidden=true;
     $("product-search").value="";$("product-form").hidden=true;loadProducts();
     $("products-panel").scrollIntoView({behavior:"smooth",block:"start"});
   }
   function showLeadsPanel(){
-    $("customers-panel").hidden=true;$("products-panel").hidden=true;$("follow-ups-panel").hidden=true;$("orders-panel").hidden=true;$("order-payment-panel").hidden=true;$("leads-panel").hidden=false;
+    $("customers-panel").hidden=true;$("products-panel").hidden=true;$("follow-ups-panel").hidden=true;$("orders-panel").hidden=true;$("order-payment-panel").hidden=true;$("sales-overview-panel").hidden=true;$("leads-panel").hidden=false;
     document.querySelector(".section-title").hidden=true;document.querySelector(".feature-grid").hidden=true;
     $("lead-search").value="";$("lead-form").hidden=true;loadLeads();
     $("leads-panel").scrollIntoView({behavior:"smooth",block:"start"});
   }
   function showFollowUpsPanel(){
-    $("customers-panel").hidden=true;$("products-panel").hidden=true;$("leads-panel").hidden=true;$("orders-panel").hidden=true;$("order-payment-panel").hidden=true;$("follow-ups-panel").hidden=false;
+    $("customers-panel").hidden=true;$("products-panel").hidden=true;$("leads-panel").hidden=true;$("orders-panel").hidden=true;$("order-payment-panel").hidden=true;$("sales-overview-panel").hidden=true;$("follow-ups-panel").hidden=false;
     document.querySelector(".section-title").hidden=true;document.querySelector(".feature-grid").hidden=true;
     $("follow-up-search").value="";$("follow-up-form").hidden=true;loadFollowUps();
     $("follow-ups-panel").scrollIntoView({behavior:"smooth",block:"start"});
@@ -482,7 +482,7 @@
   function paymentMessage(message,isError=false){const el=$("payments-list");if(message)el.insertAdjacentHTML("afterbegin",'<p class="customer-message '+(isError?'customer-error':'')+'">'+escapeHtml(message)+'</p>');}
   function orderPanelHideAll(){
     $("customers-panel").hidden=true;$("products-panel").hidden=true;$("leads-panel").hidden=true;$("follow-ups-panel").hidden=true;
-    $("orders-panel").hidden=true;$("order-payment-panel").hidden=true;
+    $("orders-panel").hidden=true;$("order-payment-panel").hidden=true;$("sales-overview-panel").hidden=true;
   }
   function showOrdersPanel(){
     orderPanelHideAll();$("orders-panel").hidden=false;
@@ -636,6 +636,68 @@
     }catch(err){console.error("Payment save failed:",err);paymentMessage(err?.message||"Could not save this payment. Please try again.",true);}
     finally{button.disabled=false;button.textContent="Save payment";}
   });
+
+  // Sales Overview uses existing business-scoped order and payment records.
+  function salesOverviewMessage(message,isError=false){
+    const el=$("sales-overview-message");el.textContent=message;el.classList.toggle("customer-error",isError);
+  }
+  function salesPeriodStart(period){
+    const now=new Date();
+    if(period==="all")return null;
+    if(period==="month")return new Date(now.getFullYear(),now.getMonth(),1);
+    const days=Number(period)||30;
+    const start=new Date(now.getFullYear(),now.getMonth(),now.getDate());
+    start.setDate(start.getDate()-(days-1));
+    return start;
+  }
+  async function loadSalesOverview(){
+    if(!supabase||!currentBusinessId){salesOverviewMessage("Business details are still loading. Please try again.",true);return;}
+    const refresh=$("refresh-sales-overview");refresh.disabled=true;refresh.textContent="Loading…";
+    salesOverviewMessage("Loading sales data…");
+    try{
+      const [ordersResult,paymentsResult]=await Promise.all([
+        supabase.from("orders").select("id,order_number,order_date,status,payment_status,total_amount,is_archived").eq("business_id",currentBusinessId).eq("is_archived",false).order("order_date",{ascending:false}),
+        supabase.from("order_payments").select("order_id,amount,payment_date").eq("business_id",currentBusinessId)
+      ]);
+      if(ordersResult.error)throw ordersResult.error;
+      if(paymentsResult.error)throw paymentsResult.error;
+      const allOrders=ordersResult.data||[],allPayments=paymentsResult.data||[];
+      const period=$("sales-period").value,start=salesPeriodStart(period),now=new Date();
+      const inRange=value=>{const d=new Date(value);return !Number.isNaN(d.getTime())&&(!start||d>=start)&&d<=now;};
+      const ordersInPeriod=allOrders.filter(o=>inRange(o.order_date));
+      const eligibleOrders=ordersInPeriod.filter(o=>!['cancelled','returned'].includes(String(o.status||'').toLowerCase())&&String(o.payment_status||'').toLowerCase()!=='refunded');
+      const eligibleIds=new Set(eligibleOrders.map(o=>o.id));
+      const paidByOrder={};
+      allPayments.forEach(p=>{paidByOrder[p.order_id]=(paidByOrder[p.order_id]||0)+Number(p.amount||0);});
+      const sales=eligibleOrders.reduce((sum,o)=>sum+Math.max(0,Number(o.total_amount||0)),0);
+      const collected=allPayments.filter(p=>eligibleIds.has(p.order_id)&&inRange(p.payment_date)).reduce((sum,p)=>sum+Number(p.amount||0),0);
+      const balance=eligibleOrders.reduce((sum,o)=>sum+Math.max(0,Number(o.total_amount||0)-(paidByOrder[o.id]||0)),0);
+      $("sales-metric-value").textContent=money(sales);
+      $("sales-metric-orders").textContent=String(eligibleOrders.length);
+      $("sales-metric-collected").textContent=money(collected);
+      $("sales-metric-balance").textContent=money(balance);
+      const statusCounts={};
+      ordersInPeriod.forEach(o=>{const status=o.status||"unknown";statusCounts[status]=(statusCounts[status]||0)+1;});
+      const statusKeys=Object.keys(statusCounts).sort((a,b)=>statusCounts[b]-statusCounts[a]);
+      $("sales-status-breakdown").innerHTML=statusKeys.length?statusKeys.map(status=>'<div class="sales-status-row"><span>'+escapeHtml(orderStatusLabel(status))+'</span><strong>'+statusCounts[status]+'</strong></div>').join(""):'<div class="empty-customers"><strong>No orders in this period</strong><p>Orders will appear here once you record a sale.</p></div>';
+      const periodLabel=period==="all"?"all time":period==="month"?"this month":"the last "+period+" days";
+      salesOverviewMessage("Showing "+periodLabel+". Sales and balances use order date; payments received use payment date.");
+    }catch(err){
+      console.error("Sales Overview load failed:",err);
+      salesOverviewMessage(err?.message||"Could not load sales data. Please check the orders and order_payments table policies.",true);
+    }finally{refresh.disabled=false;refresh.textContent="Refresh";}
+  }
+  function showSalesOverviewPanel(){
+    orderPanelHideAll();
+    $("sales-overview-panel").hidden=false;
+    document.querySelector(".section-title").hidden=true;document.querySelector(".feature-grid").hidden=true;
+    loadSalesOverview();
+    $("sales-overview-panel").scrollIntoView({behavior:"smooth",block:"start"});
+  }
+  $("open-sales-overview").addEventListener("click",showSalesOverviewPanel);
+  $("back-sales-dashboard").addEventListener("click",showDashboardOnly);
+  $("sales-period").addEventListener("change",loadSalesOverview);
+  $("refresh-sales-overview").addEventListener("click",loadSalesOverview);
 
   async function loadDashboard(user) {
     showApp();
