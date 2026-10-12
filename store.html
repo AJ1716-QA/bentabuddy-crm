@@ -12,6 +12,15 @@
     .store-shell{max-width:1040px;margin:0 auto;padding:24px 16px 48px}
     .store-brand{font-weight:800;letter-spacing:.02em;color:#123b63;font-size:14px}
     .store-topbar{display:flex;align-items:center;justify-content:space-between;gap:16px}
+    .store-cart-wrap{position:relative;z-index:20}
+    .store-cart-popover{position:absolute;top:calc(100% + 10px);right:0;width:min(420px,calc(100vw - 32px));max-height:min(75vh,680px);overflow:auto;background:#f5f7fb;border:1px solid #d7e1ed;border-radius:18px;box-shadow:0 18px 50px rgba(15,35,60,.22);padding:14px;box-sizing:border-box}
+    .store-cart-popover[hidden]{display:none}
+    .store-cart-popover .store-section{margin:0;padding:16px}
+    .store-cart-popover .cart-line{grid-template-columns:minmax(0,1fr) auto;gap:8px}
+    .store-cart-popover .cart-line>strong{grid-column:1/-1;text-align:right}
+    .store-cart-popover .quantity-control{flex-wrap:wrap}
+    .store-cart-popover .cart-top{align-items:flex-start}
+    @media(max-width:480px){.store-cart-popover{position:fixed;top:72px;right:12px;width:calc(100vw - 24px);max-height:calc(100vh - 90px);z-index:1000}}
     .store-cart-toggle{position:relative;display:inline-flex;align-items:center;justify-content:center;gap:8px;min-height:44px;padding:8px 13px;border:1px solid #d7e1ed;border-radius:13px;background:#fff;color:#123b63;font:inherit;font-weight:800;cursor:pointer;box-shadow:0 3px 10px rgba(18,59,99,.06)}
     .store-cart-toggle svg{width:23px;height:23px;fill:none;stroke:currentColor;stroke-width:1.8;stroke-linecap:round;stroke-linejoin:round}
     .store-cart-badge{display:inline-grid;place-items:center;min-width:22px;height:22px;padding:0 5px;border-radius:999px;background:#123b63;color:#fff;font-size:12px;font-weight:800;box-sizing:border-box}
@@ -67,7 +76,7 @@
 </head>
 <body class="store-page">
   <main class="store-shell">
-    <div class="store-topbar"><div class="store-brand">BB · BENTABUDDY</div><button id="store-cart-toggle" class="store-cart-toggle" type="button" aria-label="Open shopping cart" aria-controls="cart-panel" aria-expanded="false"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M3 4h2l2.1 10.1a2 2 0 0 0 2 1.6h7.8a2 2 0 0 0 1.9-1.4L21 8H6"/><circle cx="10" cy="20" r="1.2"/><circle cx="18" cy="20" r="1.2"/></svg><span class="store-cart-label">Cart</span><span id="store-cart-badge" class="store-cart-badge" hidden>0</span></button></div>
+    <div class="store-topbar"><div class="store-brand">BB · BENTABUDDY</div><div class="store-cart-wrap"><button id="store-cart-toggle" class="store-cart-toggle" type="button" aria-label="Open shopping cart" aria-controls="cart-panel" aria-expanded="false"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M3 4h2l2.1 10.1a2 2 0 0 0 2 1.6h7.8a2 2 0 0 0 1.9-1.4L21 8H6"/><circle cx="10" cy="20" r="1.2"/><circle cx="18" cy="20" r="1.2"/></svg><span class="store-cart-label">Cart</span><span id="store-cart-badge" class="store-cart-badge" hidden>0</span></button><div id="store-cart-popover" class="store-cart-popover" hidden><section id="cart-panel" class="store-section" aria-labelledby="cart-heading" hidden><div class="cart-top"><h2 id="cart-heading">Your cart (<span id="cart-count">0</span>)</h2><button class="store-button secondary" type="button" id="open-checkout">Checkout</button></div><p id="cart-empty" class="cart-empty">Your cart is empty. Add a product to get started.</p><div id="cart-lines"></div><div class="cart-total-row"><span>Estimated total</span><span id="cart-total">₱0.00</span></div><p class="store-description">Delivery fees, if any, will be confirmed by the seller. Payment is not collected on this page.</p></section><section id="checkout-panel" class="store-section" aria-labelledby="checkout-heading" hidden><h2 id="checkout-heading">Customer details</h2><p class="store-description">Your order will be sent to the seller. Payment is currently arranged directly with the seller.</p><div id="checkout-message" class="checkout-message" role="alert" hidden></div><form id="checkout-form"><div class="checkout-grid"><div class="checkout-field"><label for="checkout-name">Full name *</label><input id="checkout-name" name="name" autocomplete="name" maxlength="150" required></div><div class="checkout-field"><label for="checkout-phone">Phone number *</label><input id="checkout-phone" name="phone" type="tel" autocomplete="tel" maxlength="40" required></div><div class="checkout-field"><label for="checkout-email">Email (optional)</label><input id="checkout-email" name="email" type="email" autocomplete="email" maxlength="254"></div><div class="checkout-field"><label for="checkout-fulfillment">Receive your order *</label><select id="checkout-fulfillment" name="fulfillment" required><option value="delivery">Delivery</option><option value="pickup">Pickup</option></select></div><div id="checkout-address-wrap" class="checkout-field full"><label for="checkout-address">Delivery address *</label><textarea id="checkout-address" name="address" autocomplete="street-address" maxlength="1000" required></textarea></div><div class="checkout-field full"><label for="checkout-notes">Order notes (optional)</label><textarea id="checkout-notes" name="notes" maxlength="1000" placeholder="Any details for the seller"></textarea></div></div><div class="checkout-actions"><button id="place-order" class="store-button primary" type="submit" disabled>Place order</button><button id="checkout-cancel" class="store-button secondary" type="button">Back to cart</button></div></form></section></div></div>
     <header class="store-header">
       <div class="store-eyebrow">ONLINE STORE</div>
       <h1 id="store-title">Welcome to our store</h1>
@@ -76,29 +85,7 @@
     <div id="store-message" class="store-message" role="status" aria-live="polite">Loading store…</div>
     <div id="store-shopping" hidden>
       <section id="store-products" class="store-grid" aria-label="Published products" hidden></section>
-      <section id="cart-panel" class="store-section" aria-labelledby="cart-heading" hidden>
-        <div class="cart-top"><h2 id="cart-heading">Your cart (<span id="cart-count">0</span>)</h2><button class="store-button secondary" type="button" id="open-checkout">Checkout</button></div>
-        <p id="cart-empty" class="cart-empty">Your cart is empty. Add a product to get started.</p>
-        <div id="cart-lines"></div>
-        <div class="cart-total-row"><span>Estimated total</span><span id="cart-total">₱0.00</span></div>
-        <p class="store-description">Delivery fees, if any, will be confirmed by the seller. Payment is not collected on this page.</p>
-      </section>
-      <section id="checkout-panel" class="store-section" aria-labelledby="checkout-heading" hidden>
-        <h2 id="checkout-heading">Customer details</h2>
-        <p class="store-description">Your order will be sent to the seller. Payment is currently arranged directly with the seller.</p>
-        <div id="checkout-message" class="checkout-message" role="alert" hidden></div>
-        <form id="checkout-form">
-          <div class="checkout-grid">
-            <div class="checkout-field"><label for="checkout-name">Full name *</label><input id="checkout-name" name="name" autocomplete="name" maxlength="150" required></div>
-            <div class="checkout-field"><label for="checkout-phone">Phone number *</label><input id="checkout-phone" name="phone" type="tel" autocomplete="tel" maxlength="40" required></div>
-            <div class="checkout-field"><label for="checkout-email">Email (optional)</label><input id="checkout-email" name="email" type="email" autocomplete="email" maxlength="254"></div>
-            <div class="checkout-field"><label for="checkout-fulfillment">Receive your order *</label><select id="checkout-fulfillment" name="fulfillment" required><option value="delivery">Delivery</option><option value="pickup">Pickup</option></select></div>
-            <div id="checkout-address-wrap" class="checkout-field full"><label for="checkout-address">Delivery address *</label><textarea id="checkout-address" name="address" autocomplete="street-address" maxlength="1000" required></textarea></div>
-            <div class="checkout-field full"><label for="checkout-notes">Order notes (optional)</label><textarea id="checkout-notes" name="notes" maxlength="1000" placeholder="Any details for the seller"></textarea></div>
-          </div>
-          <div class="checkout-actions"><button id="place-order" class="store-button primary" type="submit" disabled>Place order</button><button id="checkout-cancel" class="store-button secondary" type="button">Back to cart</button></div>
-        </form>
-      </section>
+      
       <section id="order-success" class="order-success" hidden role="status" aria-live="polite">
         <h2>Order submitted successfully</h2>
         <p>Your order number is <strong id="order-success-number"></strong>.</p>
