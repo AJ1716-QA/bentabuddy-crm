@@ -22,3 +22,5 @@ select:focus{border-color:var(--blue);box-shadow:0 0 0 3px #2457a71a}
 [hidden]{display:none!important}
 
 .store-toggle-label{display:flex;align-items:center;gap:10px}.store-toggle-label input{width:20px;height:20px;margin:0;flex:0 0 auto}.store-settings-message{overflow-wrap:anywhere}
+
+.store-public-link{display:flex;align-items:center;flex-wrap:wrap;gap:10px;margin-top:14px;padding:14px;border:1px solid var(--line);border-radius:12px}.store-public-link a{min-width:0;overflow-wrap:anywhere;color:var(--navy);font-size:13px;flex:1}
