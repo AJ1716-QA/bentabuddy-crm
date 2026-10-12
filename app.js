@@ -901,23 +901,22 @@
     }
   });
 
-  // Mobile device/browser Back should return from an open module to the dashboard.
-  // Keep only one in-app history entry while switching between dashboard modules.
-  function rememberModuleNavigation() {
-    if (!history.state || history.state.bentaBuddyModule !== true) {
-      history.pushState({ ...(history.state || {}), bentaBuddyModule: true }, "", location.href);
-    }
-  }
+  // Make the phone/browser Back action return to the dashboard from any module.
   const dashboardGrid = document.querySelector(".feature-grid");
   if (dashboardGrid) {
     dashboardGrid.addEventListener("click", (event) => {
-      if (event.target.closest(".feature-button")) rememberModuleNavigation();
+      if (event.target.closest(".feature-button")) {
+        // Add a fresh history entry for every module opening. Do not rely on the
+        // previous history.state, which can differ between mobile browsers/PWAs.
+        history.pushState({ bentaBuddyModule: true }, "", location.href);
+      }
     });
   }
   window.addEventListener("popstate", () => {
-    // The browser Back action returns to the app's dashboard instead of leaving
-    // the current module visible on top of another module.
-    if (!history.state || history.state.bentaBuddyModule !== true) {
+    const grid = document.querySelector(".feature-grid");
+    const appIsVisible = !$("app-panel").hidden;
+    const aModuleIsOpen = appIsVisible && grid && grid.hidden;
+    if (aModuleIsOpen) {
       showDashboardOnly();
       window.scrollTo({ top: 0, behavior: "smooth" });
     }
