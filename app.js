@@ -66,6 +66,8 @@
   }
 
   let currentBusinessId = null;
+  let notificationRows = [];
+  let notificationPollTimer = null;
   let customerRows = [];
   let customerEditMode = false;
   function showDashboardOnly(){ $("customers-panel").hidden=true; document.querySelector(".section-title").hidden=false; document.querySelector(".feature-grid").hidden=false; }
@@ -798,6 +800,38 @@
     }finally{button.disabled=false;button.textContent="Save store settings";}
   });
 
+  function notificationMessage(message,isError=false){const el=$("notifications-message");el.textContent=message;el.classList.toggle("customer-error",isError);}
+  function renderNotifications(){
+    const unread=notificationRows.filter(n=>!n.is_read).length;
+    $("notification-count").textContent=unread>99?"99+":String(unread);
+    $("notification-count").hidden=unread===0;
+    if(!notificationRows.length){$("notifications-list").innerHTML='<div class="empty-customers"><strong>No notifications yet</strong><p>New online-store orders will appear here.</p></div>';notificationMessage("You're all caught up.");return;}
+    $("notifications-list").innerHTML=notificationRows.map(n=>'<article class="notification-card'+(n.is_read?' is-read':'')+'"><div class="notification-card-main"><span class="notification-dot" aria-hidden="true"></span><div><h3>'+escapeHtml(n.title||"Notification")+'</h3><p>'+escapeHtml(n.message||"")+'</p><small>'+escapeHtml(formatDate(n.created_at))+'</small></div></div>'+(n.is_read?'':'<button class="secondary" type="button" data-mark-notification-read="'+escapeHtml(n.id)+'">Mark read</button>')+'</article>').join("");
+    notificationMessage(unread?unread+" unread notification"+(unread===1?"":"s"):"You're all caught up.");
+  }
+  async function loadNotifications(){
+    if(!supabase||!currentBusinessId)return;
+    const {data,error}=await supabase.from("notifications").select("id,business_id,order_id,title,message,is_read,created_at").eq("business_id",currentBusinessId).order("created_at",{ascending:false}).limit(30);
+    if(error){console.error("Notification load failed:",error);notificationMessage("Could not load notifications. Please check the notifications table policies.",true);return;}
+    notificationRows=data||[];renderNotifications();
+  }
+  async function openNotifications(){
+    document.querySelectorAll(".customers-panel").forEach(panel=>panel.hidden=true);
+    document.querySelector(".section-title").hidden=true;document.querySelector(".feature-grid").hidden=true;
+    $("notifications-panel").hidden=false;$("notification-bell").setAttribute("aria-expanded","true");
+    notificationMessage("Loading notifications…");await loadNotifications();
+    $("notifications-panel").scrollIntoView({behavior:"smooth",block:"start"});
+  }
+  $("notification-bell").addEventListener("click",()=>{if(!$("notifications-panel").hidden){$("notifications-panel").hidden=true;$("notification-bell").setAttribute("aria-expanded","false");document.querySelector(".section-title").hidden=false;document.querySelector(".feature-grid").hidden=false;}else{openNotifications();}});
+  $("back-notifications-dashboard").addEventListener("click",()=>{ $("notifications-panel").hidden=true;$("notification-bell").setAttribute("aria-expanded","false");document.querySelector(".section-title").hidden=false;document.querySelector(".feature-grid").hidden=false;window.scrollTo({top:0,behavior:"smooth"}); });
+  $("notifications-list").addEventListener("click",async event=>{
+    const button=event.target.closest("[data-mark-notification-read]");if(!button||!supabase||!currentBusinessId)return;
+    const id=button.dataset.markNotificationRead;button.disabled=true;
+    const {error}=await supabase.from("notifications").update({is_read:true}).eq("id",id).eq("business_id",currentBusinessId);
+    if(error){console.error("Mark notification read failed:",error);notificationMessage("Could not mark this notification as read.",true);button.disabled=false;return;}
+    notificationRows=notificationRows.map(n=>n.id===id?{...n,is_read:true}:n);renderNotifications();
+  });
+
   async function loadDashboard(user) {
     showApp();
     $("user-email").textContent = user.email || "";
@@ -824,6 +858,9 @@
 
     $("business-title").textContent = business.business_name || "My Business";
     currentBusinessId = business.id;
+    await loadNotifications();
+    if(notificationPollTimer) clearInterval(notificationPollTimer);
+    notificationPollTimer=setInterval(()=>{if(currentBusinessId&&!document.hidden)loadNotifications();},30000);
     $("store-slug").value = business.store_slug || "";
     $("storefront-enabled").checked = business.storefront_enabled === true;
     $("store-settings-message").textContent = "";
@@ -885,7 +922,7 @@
 
       supabase.auth.onAuthStateChange((event, sessionNow) => {
         if (event === "SIGNED_OUT" || !sessionNow?.user) {
-          showAuth();
+          currentBusinessId=null;notificationRows=[];if(notificationPollTimer){clearInterval(notificationPollTimer);notificationPollTimer=null;}showAuth();
         } else if (event === "SIGNED_IN" || event === "TOKEN_REFRESHED" || event === "USER_UPDATED") {
           // Avoid heavy queries inside the auth callback.
           setTimeout(() => loadDashboard(sessionNow.user), 0);
