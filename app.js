@@ -340,29 +340,29 @@
   let followUpRows = [];
   let followUpEditMode = false;
   function showDashboardOnly(){
-    $("customers-panel").hidden=true;$("products-panel").hidden=true;$("leads-panel").hidden=true;$("follow-ups-panel").hidden=true;
+    $("customers-panel").hidden=true;$("products-panel").hidden=true;$("leads-panel").hidden=true;$("follow-ups-panel").hidden=true;$("orders-panel").hidden=true;$("order-payment-panel").hidden=true;
     document.querySelector(".section-title").hidden=false;document.querySelector(".feature-grid").hidden=false;
   }
   function showCustomersPanel(){
-    $("products-panel").hidden=true;$("leads-panel").hidden=true;$("follow-ups-panel").hidden=true;$("customers-panel").hidden=false;
+    $("products-panel").hidden=true;$("leads-panel").hidden=true;$("follow-ups-panel").hidden=true;$("orders-panel").hidden=true;$("order-payment-panel").hidden=true;$("customers-panel").hidden=false;
     document.querySelector(".section-title").hidden=true;document.querySelector(".feature-grid").hidden=true;
     $("customer-search").value="";$("customer-form").hidden=true;loadCustomers();
     $("customers-panel").scrollIntoView({behavior:"smooth",block:"start"});
   }
   function showProductsPanel(){
-    $("customers-panel").hidden=true;$("leads-panel").hidden=true;$("follow-ups-panel").hidden=true;$("products-panel").hidden=false;
+    $("customers-panel").hidden=true;$("leads-panel").hidden=true;$("follow-ups-panel").hidden=true;$("orders-panel").hidden=true;$("order-payment-panel").hidden=true;$("products-panel").hidden=false;
     document.querySelector(".section-title").hidden=true;document.querySelector(".feature-grid").hidden=true;
     $("product-search").value="";$("product-form").hidden=true;loadProducts();
     $("products-panel").scrollIntoView({behavior:"smooth",block:"start"});
   }
   function showLeadsPanel(){
-    $("customers-panel").hidden=true;$("products-panel").hidden=true;$("follow-ups-panel").hidden=true;$("leads-panel").hidden=false;
+    $("customers-panel").hidden=true;$("products-panel").hidden=true;$("follow-ups-panel").hidden=true;$("orders-panel").hidden=true;$("order-payment-panel").hidden=true;$("leads-panel").hidden=false;
     document.querySelector(".section-title").hidden=true;document.querySelector(".feature-grid").hidden=true;
     $("lead-search").value="";$("lead-form").hidden=true;loadLeads();
     $("leads-panel").scrollIntoView({behavior:"smooth",block:"start"});
   }
   function showFollowUpsPanel(){
-    $("customers-panel").hidden=true;$("products-panel").hidden=true;$("leads-panel").hidden=true;$("follow-ups-panel").hidden=false;
+    $("customers-panel").hidden=true;$("products-panel").hidden=true;$("leads-panel").hidden=true;$("orders-panel").hidden=true;$("order-payment-panel").hidden=true;$("follow-ups-panel").hidden=false;
     document.querySelector(".section-title").hidden=true;document.querySelector(".feature-grid").hidden=true;
     $("follow-up-search").value="";$("follow-up-form").hidden=true;loadFollowUps();
     $("follow-ups-panel").scrollIntoView({behavior:"smooth",block:"start"});
@@ -468,6 +468,173 @@
       resetFollowUpForm();await loadFollowUps();followUpMessage(id?"Follow-up updated.":"Follow-up added successfully.");
     }catch(err){console.error("Follow-up save failed:",err);followUpMessage(err?.message||"Could not save this follow-up. Please try again.",true);}
     finally{button.disabled=false;button.textContent="Save follow-up";}
+  });
+
+
+  // Orders and payments: all reads and writes are scoped to the signed-in business.
+  let orderRows = [];
+  let orderItemDrafts = [];
+  let orderCustomerChoices = [];
+  let orderProductChoices = [];
+  let paymentOrder = null;
+  let orderEditMode = false;
+  function orderMessage(message,isError=false){const el=$("orders-message");el.textContent=message;el.classList.toggle("customer-error",isError);}
+  function paymentMessage(message,isError=false){const el=$("payments-list");if(message)el.insertAdjacentHTML("afterbegin",'<p class="customer-message '+(isError?'customer-error':'')+'">'+escapeHtml(message)+'</p>');}
+  function orderPanelHideAll(){
+    $("customers-panel").hidden=true;$("products-panel").hidden=true;$("leads-panel").hidden=true;$("follow-ups-panel").hidden=true;
+    $("orders-panel").hidden=true;$("order-payment-panel").hidden=true;
+  }
+  function showOrdersPanel(){
+    orderPanelHideAll();$("orders-panel").hidden=false;
+    document.querySelector(".section-title").hidden=true;document.querySelector(".feature-grid").hidden=true;
+    $("order-search").value="";$("order-form").hidden=true;loadOrders();
+    $("orders-panel").scrollIntoView({behavior:"smooth",block:"start"});
+  }
+  async function loadOrderChoices(){
+    const [customers,products]=await Promise.all([
+      supabase.from("customers").select("id,full_name").eq("business_id",currentBusinessId).eq("is_archived",false).order("full_name",{ascending:true}),
+      supabase.from("products").select("id,product_name,selling_price,cost_price").eq("business_id",currentBusinessId).eq("is_active",true).order("product_name",{ascending:true})
+    ]);
+    if(customers.error)throw customers.error;if(products.error)throw products.error;
+    orderCustomerChoices=customers.data||[];orderProductChoices=products.data||[];
+    $("order-customer").innerHTML='<option value="">Walk-in / no customer</option>'+orderCustomerChoices.map(c=>'<option value="'+escapeHtml(c.id)+'">'+escapeHtml(c.full_name)+'</option>').join("");
+  }
+  function orderProductOptions(selectedId){
+    return '<option value="">Choose a product…</option>'+orderProductChoices.map(p=>'<option value="'+escapeHtml(p.id)+'" '+(p.id===selectedId?'selected':'')+'>'+escapeHtml(p.product_name)+' · '+money(p.selling_price)+'</option>').join("");
+  }
+  function renderOrderItemEditor(){
+    const root=$("order-items-editor");
+    if(!orderItemDrafts.length){root.innerHTML='<div class="empty-customers"><strong>No products added</strong><p>Select “Add product” to include an item in this order.</p></div>';calculateOrderTotal();return;}
+    root.innerHTML=orderItemDrafts.map((it,i)=>'<div class="order-item-row" data-order-item="'+i+'"><label>Product<select data-item-product="'+i+'">'+orderProductOptions(it.product_id)+'</select></label><label>Quantity<input data-item-quantity="'+i+'" type="number" min="0.001" step="any" value="'+escapeHtml(it.quantity)+'" inputmode="decimal"></label><label>Unit price (₱)<input data-item-price="'+i+'" type="number" min="0" step="0.01" value="'+escapeHtml(it.unit_price)+'" inputmode="decimal"></label><label>Item discount (₱)<input data-item-discount="'+i+'" type="number" min="0" step="0.01" value="'+escapeHtml(it.line_discount||0)+'" inputmode="decimal"></label><div class="order-item-footer"><span>Line total: <strong>'+money(Math.max(0,(Number(it.quantity)||0)*(Number(it.unit_price)||0)-(Number(it.line_discount)||0)))+'</strong></span><button type="button" class="secondary customer-delete" data-remove-order-item="'+i+'">Remove</button></div></div>').join("");
+    calculateOrderTotal();
+  }
+  function calculateOrderTotal(){
+    const subtotal=orderItemDrafts.reduce((sum,it)=>sum+Math.max(0,(Number(it.quantity)||0)*(Number(it.unit_price)||0)-(Number(it.line_discount)||0)),0);
+    const discount=Math.max(0,Number($("order-discount").value)||0);
+    const delivery=Math.max(0,Number($("order-delivery-fee").value)||0);
+    $("order-subtotal-display").textContent=money(subtotal);$("order-discount-display").textContent=money(discount);$("order-delivery-display").textContent=money(delivery);
+    $("order-total-display").textContent=money(Math.max(0,subtotal-discount+delivery));
+    return {subtotal,discount,delivery,total:Math.max(0,subtotal-discount+delivery)};
+  }
+  function resetOrderForm(){
+    $("order-form").reset();$("order-id").value="";orderEditMode=false;$("order-form-title").textContent="Create order";$("save-order").textContent="Save order";
+    $("order-date").value=localDateTime();$("order-status").value="pending";$("order-discount").value="0";$("order-delivery-fee").value="0";
+    orderItemDrafts=[];renderOrderItemEditor();$("order-form").hidden=true;
+  }
+  async function loadOrders(){
+    if(!supabase||!currentBusinessId){orderMessage("Business details are still loading. Please try again.",true);return;}
+    orderMessage("Loading orders…");$("orders-list").innerHTML="";
+    const {data,error}=await supabase.from("orders").select("id,business_id,customer_id,order_number,order_date,status,payment_status,subtotal,discount_amount,delivery_fee,total_amount,notes,delivered_at,is_archived,created_at,updated_at").eq("business_id",currentBusinessId).eq("is_archived",false).order("order_date",{ascending:false});
+    if(error){console.error("Order load failed:",error);orderMessage("Could not load orders. Please check the orders table policies.",true);return;}
+    orderRows=data||[];
+    const [customers,payments]=await Promise.all([supabase.from("customers").select("id,full_name").eq("business_id",currentBusinessId),supabase.from("order_payments").select("order_id,amount").eq("business_id",currentBusinessId)]);
+    const customerNames={};(customers.data||[]).forEach(c=>customerNames[c.id]=c.full_name);
+    const paidByOrder={};(payments.data||[]).forEach(p=>paidByOrder[p.order_id]=(paidByOrder[p.order_id]||0)+Number(p.amount||0));
+    orderRows=orderRows.map(o=>({...o,customerName:customerNames[o.customer_id]||"Walk-in customer",paidAmount:paidByOrder[o.id]||0,balance:Math.max(0,Number(o.total_amount||0)-(paidByOrder[o.id]||0))}));
+    renderOrders();
+  }
+  function renderOrders(){
+    const q=$("order-search").value.trim().toLowerCase();
+    const rows=orderRows.filter(o=>String(o.order_number).includes(q)||String(o.customerName||"").toLowerCase().includes(q)||String(o.status||"").includes(q));
+    if(!rows.length){$("orders-list").innerHTML='<div class="empty-customers"><strong>'+(q?'No matching orders':'No orders yet')+'</strong><p>'+(q?'Try another search term.':'Select “Create order” to record your first sale.')+'</p></div>';orderMessage(q?'No matching orders':'0 orders saved');return;}
+    $("orders-list").innerHTML=rows.map(o=>'<article class="customer-card"><div class="customer-card-main"><div class="product-avatar">#</div><div class="customer-card-details"><h3>Order #'+escapeHtml(o.order_number)+' · '+escapeHtml(o.customerName)+'</h3><p><span class="lead-stage">'+escapeHtml(o.status)+'</span><span>'+escapeHtml(formatDate(o.order_date))+'</span></p><p><span>Total: <strong>'+money(o.total_amount)+'</strong></span><span>Paid: '+money(o.paidAmount)+'</span><span>Balance: <strong>'+money(o.balance)+'</strong></span></p><p><span>Payment: '+escapeHtml(o.balance<=0?'Paid':o.paidAmount>0?'Partially paid':'Unpaid')+'</span></p></div></div><div class="customer-actions"><button class="secondary" type="button" data-edit-order="'+o.id+'">Edit</button><button class="secondary" type="button" data-order-payments="'+o.id+'">Payments</button></div></article>').join("");
+    orderMessage(rows.length+" order"+(rows.length===1?"":"s")+" shown");
+  }
+  async function editOrder(id){
+    const o=orderRows.find(r=>r.id===id);if(!o)return;
+    try{
+      await loadOrderChoices();
+      const {data,error}=await supabase.from("order_items").select("id,product_id,product_name,quantity,unit_price,unit_cost,line_discount,line_total").eq("business_id",currentBusinessId).eq("order_id",id);
+      if(error)throw error;
+      $("order-id").value=o.id;$("order-customer").value=o.customer_id||"";$("order-date").value=localDateTime(o.order_date);$("order-status").value=o.status||"pending";
+      $("order-discount").value=Number(o.discount_amount||0);$("order-delivery-fee").value=Number(o.delivery_fee||0);$("order-notes").value=o.notes||"";
+      orderItemDrafts=(data||[]).map(it=>({id:it.id,product_id:it.product_id||"",product_name:it.product_name,quantity:Number(it.quantity),unit_price:Number(it.unit_price),unit_cost:Number(it.unit_cost||0),line_discount:Number(it.line_discount||0)}));
+      renderOrderItemEditor();orderEditMode=true;$("order-form-title").textContent="Edit order #"+o.order_number;$("save-order").textContent="Save changes";$("order-form").hidden=false;$("order-form").scrollIntoView({behavior:"smooth",block:"start"});
+    }catch(err){console.error("Order edit load failed:",err);orderMessage(err.message||"Could not open this order.",true);}
+  }
+  async function openOrderPayments(id){
+    const o=orderRows.find(r=>r.id===id);if(!o)return;paymentOrder=o;
+    $("orders-panel").hidden=true;$("order-payment-panel").hidden=false;$("payment-order-id").value=o.id;
+    $("payment-order-title").textContent="Payments · Order #"+o.order_number;
+    $("payment-order-summary").textContent=o.customerName+" · Total "+money(o.total_amount)+" · Paid "+money(o.paidAmount)+" · Balance "+money(o.balance);
+    $("payment-date").value=localDateTime();$("payment-amount").value=o.balance>0?o.balance:"";$("payment-method").value="cash";$("payment-reference").value="";$("payment-notes").value="";
+    await loadOrderPayments(id);$("order-payment-panel").scrollIntoView({behavior:"smooth",block:"start"});
+  }
+  async function loadOrderPayments(orderId){
+    const root=$("payments-list");root.innerHTML='<p class="customer-message muted">Loading payments…</p>';
+    const {data,error}=await supabase.from("order_payments").select("id,order_id,amount,payment_method,payment_date,reference_number,notes,created_at").eq("business_id",currentBusinessId).eq("order_id",orderId).order("payment_date",{ascending:false});
+    if(error){console.error(error);root.innerHTML='<div class="empty-customers"><strong>Could not load payments</strong><p>Check the order_payments table policies.</p></div>';return;}
+    if(!data?.length){root.innerHTML='<div class="empty-customers"><strong>No payments recorded</strong><p>Record a payment below, including a deposit or partial payment.</p></div>';return;}
+    root.innerHTML=data.map(p=>'<article class="customer-card"><div class="customer-card-main"><div class="product-avatar">₱</div><div class="customer-card-details"><h3>'+money(p.amount)+' · '+escapeHtml(String(p.payment_method).replace(/_/g," "))+'</h3><p><span>'+escapeHtml(formatDate(p.payment_date))+'</span>'+(p.reference_number?'<span>Ref: '+escapeHtml(p.reference_number)+'</span>':'')+'</p>'+(p.notes?'<p class="customer-notes">'+escapeHtml(p.notes)+'</p>':'')+'</div></div></article>').join("");
+  }
+  $("open-orders").addEventListener("click",showOrdersPanel);
+  $("back-orders-dashboard").addEventListener("click",()=>{orderPanelHideAll();showDashboardOnly();});
+  $("back-order-list").addEventListener("click",()=>{$("order-payment-panel").hidden=true;$("orders-panel").hidden=false;loadOrders();$("orders-panel").scrollIntoView({behavior:"smooth",block:"start"});});
+  $("add-order").addEventListener("click",async()=>{
+    try{resetOrderForm();await loadOrderChoices();orderItemDrafts=[{product_id:"",quantity:1,unit_price:0,unit_cost:0,line_discount:0}];renderOrderItemEditor();$("order-form").hidden=false;$("order-form").scrollIntoView({behavior:"smooth",block:"start"});}
+    catch(err){console.error(err);orderMessage(err.message||"Could not load customers and products.",true);}
+  });
+  $("cancel-order").addEventListener("click",resetOrderForm);
+  $("add-order-item").addEventListener("click",()=>{orderItemDrafts.push({product_id:"",quantity:1,unit_price:0,unit_cost:0,line_discount:0});renderOrderItemEditor();});
+  $("order-items-editor").addEventListener("change",event=>{
+    const t=event.target,attr=t.hasAttribute("data-item-product")?"data-item-product":t.hasAttribute("data-item-quantity")?"data-item-quantity":t.hasAttribute("data-item-price")?"data-item-price":t.hasAttribute("data-item-discount")?"data-item-discount":null;
+    if(!attr)return;const i=Number(t.getAttribute(attr));if(!orderItemDrafts[i])return;
+    if(attr==="data-item-product"){const p=orderProductChoices.find(x=>x.id===t.value);orderItemDrafts[i].product_id=t.value;if(p){orderItemDrafts[i].product_name=p.product_name;orderItemDrafts[i].unit_price=Number(p.selling_price)||0;orderItemDrafts[i].unit_cost=Number(p.cost_price)||0;}renderOrderItemEditor();return;}
+    if(attr==="data-item-quantity")orderItemDrafts[i].quantity=t.value;
+    if(attr==="data-item-price")orderItemDrafts[i].unit_price=t.value;
+    if(attr==="data-item-discount")orderItemDrafts[i].line_discount=t.value;
+    const row=t.closest(".order-item-row");if(row)row.querySelector(".order-item-footer strong").textContent=money(Math.max(0,(Number(orderItemDrafts[i].quantity)||0)*(Number(orderItemDrafts[i].unit_price)||0)-(Number(orderItemDrafts[i].line_discount)||0)));
+    calculateOrderTotal();
+  });
+  $("order-items-editor").addEventListener("input",event=>{
+    const t=event.target,attrs=["data-item-quantity","data-item-price","data-item-discount"],attr=attrs.find(a=>t.hasAttribute(a));if(!attr)return;
+    const i=Number(t.getAttribute(attr));if(!orderItemDrafts[i])return;
+    if(attr==="data-item-quantity")orderItemDrafts[i].quantity=t.value;if(attr==="data-item-price")orderItemDrafts[i].unit_price=t.value;if(attr==="data-item-discount")orderItemDrafts[i].line_discount=t.value;
+    const row=t.closest(".order-item-row");if(row)row.querySelector(".order-item-footer strong").textContent=money(Math.max(0,(Number(orderItemDrafts[i].quantity)||0)*(Number(orderItemDrafts[i].unit_price)||0)-(Number(orderItemDrafts[i].line_discount)||0)));calculateOrderTotal();
+  });
+  $("order-items-editor").addEventListener("click",event=>{const b=event.target.closest("[data-remove-order-item]");if(!b)return;orderItemDrafts.splice(Number(b.dataset.removeOrderItem),1);renderOrderItemEditor();});
+  ["order-discount","order-delivery-fee"].forEach(id=>$(id).addEventListener("input",calculateOrderTotal));
+  $("order-search").addEventListener("input",renderOrders);
+  $("orders-list").addEventListener("click",async event=>{const edit=event.target.closest("[data-edit-order]");if(edit){await editOrder(edit.dataset.editOrder);return;}const payments=event.target.closest("[data-order-payments]");if(payments)await openOrderPayments(payments.dataset.orderPayments);});
+  $("order-form").addEventListener("submit",async event=>{
+    event.preventDefault();if(!supabase||!currentBusinessId){orderMessage("Business details are still loading. Please try again.",true);return;}
+    const items=orderItemDrafts.map(it=>({...it,quantity:Number(it.quantity),unit_price:Number(it.unit_price),unit_cost:Number(it.unit_cost)||0,line_discount:Number(it.line_discount)||0}));
+    if(!items.length||items.some(it=>!it.product_id||!orderProductChoices.some(p=>p.id===it.product_id)||!(it.quantity>0)||it.unit_price<0||it.line_discount<0||it.line_discount>it.quantity*it.unit_price)){orderMessage("Add at least one valid product. Check quantities, prices, and item discounts.",true);return;}
+    const totals=calculateOrderTotal();if(totals.discount>totals.subtotal){orderMessage("The order discount cannot exceed the items subtotal.",true);return;}
+    const id=$("order-id").value,button=$("save-order");button.disabled=true;button.textContent="Saving…";
+    try{
+      let orderId=id;
+      if(id&&orderEditMode){
+        const {error}=await supabase.from("orders").update({customer_id:$("order-customer").value||null,order_date:new Date($("order-date").value).toISOString(),status:$("order-status").value,subtotal:totals.subtotal,discount_amount:totals.discount,delivery_fee:totals.delivery,total_amount:totals.total,notes:$("order-notes").value.trim()||null,delivered_at:$("order-status").value==="delivered"?new Date().toISOString():null,updated_at:new Date().toISOString()}).eq("id",id).eq("business_id",currentBusinessId);
+        if(error)throw error;
+        const {error:delError}=await supabase.from("order_items").delete().eq("order_id",id).eq("business_id",currentBusinessId);if(delError)throw delError;
+      }else{
+        const {data:latest,error:latestError}=await supabase.from("orders").select("order_number").eq("business_id",currentBusinessId).order("order_number",{ascending:false}).limit(1);if(latestError)throw latestError;
+        const nextNumber=(latest?.length?Number(latest[0].order_number):0)+1;
+        const {data,error}=await supabase.from("orders").insert({business_id:currentBusinessId,customer_id:$("order-customer").value||null,order_number:nextNumber,order_date:new Date($("order-date").value).toISOString(),status:$("order-status").value,payment_status:"unpaid",subtotal:totals.subtotal,discount_amount:totals.discount,delivery_fee:totals.delivery,total_amount:totals.total,notes:$("order-notes").value.trim()||null,delivered_at:$("order-status").value==="delivered"?new Date().toISOString():null,is_archived:false,updated_at:new Date().toISOString()}).select("id").single();
+        if(error)throw error;orderId=data.id;
+      }
+      const rows=items.map(it=>{const p=orderProductChoices.find(x=>x.id===it.product_id);return {business_id:currentBusinessId,order_id:orderId,product_id:it.product_id,product_name:p.product_name,quantity:it.quantity,unit_price:it.unit_price,unit_cost:it.unit_cost,line_discount:it.line_discount,line_total:Math.max(0,it.quantity*it.unit_price-it.line_discount)};});
+      const {error:itemError}=await supabase.from("order_items").insert(rows);if(itemError)throw itemError;
+      resetOrderForm();await loadOrders();orderMessage(id?"Order updated.":"Order created successfully.");
+    }catch(err){console.error("Order save failed:",err);orderMessage(err?.message||"Could not save this order. Please try again.",true);}
+    finally{button.disabled=false;button.textContent="Save order";}
+  });
+  $("cancel-payment").addEventListener("click",()=>{$("payment-form").reset();$("payment-date").value=localDateTime();});
+  $("payment-form").addEventListener("submit",async event=>{
+    event.preventDefault();const orderId=$("payment-order-id").value,amount=Number($("payment-amount").value),button=$("save-payment");
+    if(!orderId||!currentBusinessId||!(amount>0)){paymentMessage("Enter a valid payment amount.",true);return;}
+    button.disabled=true;button.textContent="Saving…";
+    try{
+      const paymentDate=$("payment-date").value?new Date($("payment-date").value).toISOString():new Date().toISOString();
+      const {error}=await supabase.from("order_payments").insert({business_id:currentBusinessId,order_id:orderId,amount,payment_method:$("payment-method").value,payment_date:paymentDate,reference_number:$("payment-reference").value.trim()||null,notes:$("payment-notes").value.trim()||null});if(error)throw error;
+      const {data:payments,error:paymentsError}=await supabase.from("order_payments").select("amount").eq("business_id",currentBusinessId).eq("order_id",orderId);if(paymentsError)throw paymentsError;
+      const totalPaid=(payments||[]).reduce((sum,p)=>sum+Number(p.amount||0),0),target=orderRows.find(o=>o.id===orderId);
+      const paymentStatus=totalPaid<=0?"unpaid":totalPaid+0.005>=Number(target?.total_amount||0)?"paid":"partial";
+      const {error:updateError}=await supabase.from("orders").update({payment_status:paymentStatus,updated_at:new Date().toISOString()}).eq("id",orderId).eq("business_id",currentBusinessId);if(updateError)throw updateError;
+      $("payment-form").reset();$("payment-date").value=localDateTime();await loadOrders();await openOrderPayments(orderId);
+    }catch(err){console.error("Payment save failed:",err);paymentMessage(err?.message||"Could not save this payment. Please try again.",true);}
+    finally{button.disabled=false;button.textContent="Save payment";}
   });
 
   async function loadDashboard(user) {
