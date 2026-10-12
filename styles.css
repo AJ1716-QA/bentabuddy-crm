@@ -9,3 +9,6 @@
 .lead-stage{display:inline-block;background:#eaf0fa;color:var(--navy);font-size:11px;font-weight:800;border-radius:999px;padding:4px 9px}
 select{display:block;width:100%;margin-top:8px;padding:14px 13px;border:1px solid #d5deea;border-radius:11px;background:#fff;font:inherit;font-size:16px;color:var(--ink);outline:none}
 select:focus{border-color:var(--blue);box-shadow:0 0 0 3px #2457a71a}
+
+.follow-up-overdue{background:#fff0f0;color:#a82d36}
+#follow-up-due-at{min-width:0}
