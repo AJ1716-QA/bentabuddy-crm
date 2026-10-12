@@ -344,7 +344,7 @@
     document.querySelector(".section-title").hidden=false;document.querySelector(".feature-grid").hidden=false;
   }
   function showCustomersPanel(){
-    $("products-panel").hidden=true;$("leads-panel").hidden=true;$("follow-ups-panel").hidden=true;$("orders-panel").hidden=true;$("order-payment-panel").hidden=true;$("customers-panel").hidden=false;
+    $("products-panel").hidden=true;$("leads-panel").hidden=true;$("follow-ups-panel").hidden=true;$("orders-panel").hidden=true;$("order-payment-panel").hidden=true;$("sales-overview-panel").hidden=true;$("customers-panel").hidden=false;
     document.querySelector(".section-title").hidden=true;document.querySelector(".feature-grid").hidden=true;
     $("customer-search").value="";$("customer-form").hidden=true;loadCustomers();
     $("customers-panel").scrollIntoView({behavior:"smooth",block:"start"});
