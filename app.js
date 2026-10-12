@@ -344,25 +344,25 @@
     document.querySelector(".section-title").hidden=false;document.querySelector(".feature-grid").hidden=false;
   }
   function showCustomersPanel(){
-    $("products-panel").hidden=true;$("leads-panel").hidden=true;$("follow-ups-panel").hidden=true;$("orders-panel").hidden=true;$("order-payment-panel").hidden=true;$("sales-overview-panel").hidden=true;$("customers-panel").hidden=false;
+    $("products-panel").hidden=true;$("leads-panel").hidden=true;$("follow-ups-panel").hidden=true;$("orders-panel").hidden=true;$("order-payment-panel").hidden=true;$("sales-overview-panel").hidden=true;$("profit-overview-panel").hidden=true;$("customers-panel").hidden=false;
     document.querySelector(".section-title").hidden=true;document.querySelector(".feature-grid").hidden=true;
     $("customer-search").value="";$("customer-form").hidden=true;loadCustomers();
     $("customers-panel").scrollIntoView({behavior:"smooth",block:"start"});
   }
   function showProductsPanel(){
-    $("customers-panel").hidden=true;$("leads-panel").hidden=true;$("follow-ups-panel").hidden=true;$("orders-panel").hidden=true;$("order-payment-panel").hidden=true;$("sales-overview-panel").hidden=true;$("products-panel").hidden=false;
+    $("customers-panel").hidden=true;$("leads-panel").hidden=true;$("follow-ups-panel").hidden=true;$("orders-panel").hidden=true;$("order-payment-panel").hidden=true;$("sales-overview-panel").hidden=true;$("profit-overview-panel").hidden=true;$("products-panel").hidden=false;
     document.querySelector(".section-title").hidden=true;document.querySelector(".feature-grid").hidden=true;
     $("product-search").value="";$("product-form").hidden=true;loadProducts();
     $("products-panel").scrollIntoView({behavior:"smooth",block:"start"});
   }
   function showLeadsPanel(){
-    $("customers-panel").hidden=true;$("products-panel").hidden=true;$("follow-ups-panel").hidden=true;$("orders-panel").hidden=true;$("order-payment-panel").hidden=true;$("sales-overview-panel").hidden=true;$("leads-panel").hidden=false;
+    $("customers-panel").hidden=true;$("products-panel").hidden=true;$("follow-ups-panel").hidden=true;$("orders-panel").hidden=true;$("order-payment-panel").hidden=true;$("sales-overview-panel").hidden=true;$("profit-overview-panel").hidden=true;$("leads-panel").hidden=false;
     document.querySelector(".section-title").hidden=true;document.querySelector(".feature-grid").hidden=true;
     $("lead-search").value="";$("lead-form").hidden=true;loadLeads();
     $("leads-panel").scrollIntoView({behavior:"smooth",block:"start"});
   }
   function showFollowUpsPanel(){
-    $("customers-panel").hidden=true;$("products-panel").hidden=true;$("leads-panel").hidden=true;$("orders-panel").hidden=true;$("order-payment-panel").hidden=true;$("sales-overview-panel").hidden=true;$("follow-ups-panel").hidden=false;
+    $("customers-panel").hidden=true;$("products-panel").hidden=true;$("leads-panel").hidden=true;$("orders-panel").hidden=true;$("order-payment-panel").hidden=true;$("sales-overview-panel").hidden=true;$("profit-overview-panel").hidden=true;$("follow-ups-panel").hidden=false;
     document.querySelector(".section-title").hidden=true;document.querySelector(".feature-grid").hidden=true;
     $("follow-up-search").value="";$("follow-up-form").hidden=true;loadFollowUps();
     $("follow-ups-panel").scrollIntoView({behavior:"smooth",block:"start"});
@@ -482,7 +482,7 @@
   function paymentMessage(message,isError=false){const el=$("payments-list");if(message)el.insertAdjacentHTML("afterbegin",'<p class="customer-message '+(isError?'customer-error':'')+'">'+escapeHtml(message)+'</p>');}
   function orderPanelHideAll(){
     $("customers-panel").hidden=true;$("products-panel").hidden=true;$("leads-panel").hidden=true;$("follow-ups-panel").hidden=true;
-    $("orders-panel").hidden=true;$("order-payment-panel").hidden=true;$("sales-overview-panel").hidden=true;
+    $("orders-panel").hidden=true;$("order-payment-panel").hidden=true;$("sales-overview-panel").hidden=true;$("profit-overview-panel").hidden=true;
   }
   function showOrdersPanel(){
     orderPanelHideAll();$("orders-panel").hidden=false;
