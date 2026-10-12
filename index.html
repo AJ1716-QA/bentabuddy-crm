@@ -62,7 +62,21 @@
         <button id="open-orders" class="feature feature-button" type="button"><span>05</span><h3>Orders & payments</h3><p>Create sales orders and track money received.</p><small>Open orders →</small></button>
         <button id="open-sales-overview" class="feature feature-button" type="button"><span>06</span><h3>Sales Overview</h3><p>Review sales, collections, and outstanding balances.</p><small>Open sales overview →</small></button>
         <button id="open-profit-overview" class="feature feature-button" type="button"><span>07</span><h3>Profit Overview</h3><p>Review product costs, gross profit, and margins.</p><small>Open profit overview →</small></button>
+        <button id="open-store-settings" class="feature feature-button" type="button"><span>08</span><h3>Online Store</h3><p>Set your public store address and control whether it is enabled.</p><small>Configure store →</small></button>
       </div>
+      <section id="store-settings-panel" class="customers-panel" hidden>
+        <div class="customers-heading"><div><p class="eyebrow">ONLINE STORE</p><h2>Store settings</h2><p class="muted">Choose a public address and control whether visitors can view your published products.</p></div><button id="back-store-dashboard" class="secondary" type="button">← Dashboard</button></div>
+        <form id="store-settings-form" class="customer-form">
+          <div class="customer-fields">
+            <label class="field-wide">Store address / slug *<input id="store-slug" maxlength="40" autocapitalize="off" autocomplete="off" spellcheck="false" placeholder="e.g. my-shop"></label>
+            <p class="muted field-wide">Use lowercase letters, numbers, and hyphens only. Your public store page will be connected after the storefront is built.</p>
+            <label class="field-wide store-toggle-label"><input id="storefront-enabled" type="checkbox"> Enable my online store</label>
+            <p class="muted field-wide">Only products marked as published will appear. Enabling the store now will not publish any products by itself.</p>
+          </div>
+          <div class="customer-form-actions"><button id="save-store-settings" class="primary" type="submit">Save store settings</button></div>
+        </form>
+        <div id="store-settings-message" class="muted customer-message" aria-live="polite"></div>
+      </section>
       <section id="customers-panel" class="customers-panel" hidden>
         <div class="customers-heading"><div><p class="eyebrow">CUSTOMER DIRECTORY</p><h2>Customers</h2><p class="muted">Save and manage your buyers in one place.</p></div><button id="back-dashboard" class="secondary" type="button">← Dashboard</button></div>
         <div class="customer-toolbar"><input id="customer-search" type="search" placeholder="Search name, phone, or email…" aria-label="Search customers"><button id="add-customer" class="primary add-customer-button" type="button">+ Add customer</button></div>
