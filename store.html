@@ -27,7 +27,37 @@
     .store-footer{margin-top:28px;text-align:center;color:#718096;font-size:12px}
     @media(max-width:720px){.store-grid{grid-template-columns:repeat(2,minmax(0,1fr));gap:10px}.store-shell{padding:16px 12px 32px}.store-header{padding:20px;margin:18px 0 20px}.store-product-content{padding:12px}.store-product h2{font-size:15px}.store-price{font-size:18px}}
     @media(max-width:380px){.store-grid{grid-template-columns:1fr}}
-  </style>
+
+    .store-button{border:0;border-radius:10px;padding:12px 16px;font:inherit;font-weight:750;cursor:pointer}
+    .store-button.primary{background:#123b63;color:#fff;width:100%}
+    .store-button.secondary{background:#edf2f8;color:#123b63}
+    .store-button:disabled{opacity:.55;cursor:not-allowed}
+    .store-message.error,.checkout-message.error{color:#a12626;border-color:#efcaca;background:#fff8f8}
+    .store-section{margin-top:22px;padding:20px;background:#fff;border:1px solid #e1e8f0;border-radius:18px;min-width:0}
+    .store-section h2{font-size:21px;margin:0 0 14px}
+    .cart-top{display:flex;align-items:center;justify-content:space-between;gap:12px}
+    .cart-empty{color:#607087;margin:4px 0 12px}
+    .cart-line{display:grid;grid-template-columns:minmax(0,1fr) auto auto;gap:12px;align-items:center;padding:14px 0;border-bottom:1px solid #e8edf3}
+    .cart-line-main{display:flex;flex-direction:column;gap:4px;min-width:0}
+    .cart-line-main strong{overflow-wrap:anywhere}.cart-line-main span{font-size:13px;color:#607087}
+    .quantity-control{display:flex;align-items:center;gap:8px}
+    .quantity-control button{border:1px solid #d6dfeb;border-radius:8px;background:#fff;color:#123b63;min-width:32px;min-height:32px;font:inherit;cursor:pointer}
+    .quantity-control .remove-item{border:0;min-width:auto;font-size:12px;color:#8c3131}
+    .cart-total-row{display:flex;justify-content:space-between;gap:12px;padding:18px 0;font-size:18px;font-weight:800}
+    .checkout-grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:14px}
+    .checkout-field{display:flex;flex-direction:column;gap:6px;min-width:0}
+    .checkout-field.full{grid-column:1/-1}
+    .checkout-field label{font-size:13px;font-weight:700;color:#344a64}
+    .checkout-field input,.checkout-field textarea,.checkout-field select{width:100%;box-sizing:border-box;border:1px solid #cbd6e4;border-radius:10px;padding:12px;background:#fff;color:#172b45;font:inherit;min-height:44px}
+    .checkout-field textarea{min-height:82px;resize:vertical}
+    .checkout-actions{display:flex;gap:10px;margin-top:16px}
+    .checkout-actions .primary{flex:1}
+    .checkout-message{padding:12px;border:1px solid #e1e8f0;border-radius:10px;margin:12px 0;color:#607087;background:#f8fafc}
+    .order-success{padding:28px;background:#fff;border:1px solid #cfe5d6;border-radius:18px;margin:20px 0}
+    .order-success h2{margin:0 0 10px;color:#17613a}.order-success p{line-height:1.6}
+    @media(max-width:720px){.store-section{padding:15px}.cart-line{grid-template-columns:minmax(0,1fr) auto;gap:8px}.cart-line>strong{grid-column:1/-1;text-align:right}.quantity-control{gap:6px}.quantity-control .remove-item{font-size:11px}}
+    @media(max-width:430px){.checkout-grid{grid-template-columns:1fr}.checkout-field.full{grid-column:auto}.checkout-actions{flex-direction:column}.cart-top{align-items:flex-start}}
+\n  </style>
 </head>
 <body class="store-page">
   <main class="store-shell">
@@ -38,7 +68,38 @@
       <p id="store-subtitle">Browse available products.</p>
     </header>
     <div id="store-message" class="store-message" role="status" aria-live="polite">Loading store…</div>
-    <section id="store-products" class="store-grid" aria-label="Published products" hidden></section>
+    <div id="store-shopping" hidden>
+      <section id="store-products" class="store-grid" aria-label="Published products" hidden></section>
+      <section id="cart-panel" class="store-section" aria-labelledby="cart-heading" hidden>
+        <div class="cart-top"><h2 id="cart-heading">Your cart (<span id="cart-count">0</span>)</h2><button class="store-button secondary" type="button" id="open-checkout">Checkout</button></div>
+        <p id="cart-empty" class="cart-empty">Your cart is empty. Add a product to get started.</p>
+        <div id="cart-lines"></div>
+        <div class="cart-total-row"><span>Estimated total</span><span id="cart-total">₱0.00</span></div>
+        <p class="store-description">Delivery fees, if any, will be confirmed by the seller. Payment is not collected on this page.</p>
+      </section>
+      <section id="checkout-panel" class="store-section" aria-labelledby="checkout-heading" hidden>
+        <h2 id="checkout-heading">Customer details</h2>
+        <p class="store-description">Your order will be sent to the seller. Payment is currently arranged directly with the seller.</p>
+        <div id="checkout-message" class="checkout-message" role="alert" hidden></div>
+        <form id="checkout-form">
+          <div class="checkout-grid">
+            <div class="checkout-field"><label for="checkout-name">Full name *</label><input id="checkout-name" name="name" autocomplete="name" maxlength="150" required></div>
+            <div class="checkout-field"><label for="checkout-phone">Phone number *</label><input id="checkout-phone" name="phone" type="tel" autocomplete="tel" maxlength="40" required></div>
+            <div class="checkout-field"><label for="checkout-email">Email (optional)</label><input id="checkout-email" name="email" type="email" autocomplete="email" maxlength="254"></div>
+            <div class="checkout-field"><label for="checkout-fulfillment">Receive your order *</label><select id="checkout-fulfillment" name="fulfillment" required><option value="delivery">Delivery</option><option value="pickup">Pickup</option></select></div>
+            <div id="checkout-address-wrap" class="checkout-field full"><label for="checkout-address">Delivery address *</label><textarea id="checkout-address" name="address" autocomplete="street-address" maxlength="1000" required></textarea></div>
+            <div class="checkout-field full"><label for="checkout-notes">Order notes (optional)</label><textarea id="checkout-notes" name="notes" maxlength="1000" placeholder="Any details for the seller"></textarea></div>
+          </div>
+          <div class="checkout-actions"><button id="place-order" class="store-button primary" type="submit" disabled>Place order</button><button id="checkout-cancel" class="store-button secondary" type="button">Back to cart</button></div>
+        </form>
+      </section>
+      <section id="order-success" class="order-success" hidden role="status" aria-live="polite">
+        <h2>Order submitted successfully</h2>
+        <p>Your order number is <strong id="order-success-number"></strong>.</p>
+        <p>Order total: <strong id="order-success-total"></strong>.</p>
+        <p>Your order is pending and unpaid. Please wait for the seller to confirm the order and payment arrangements.</p>
+      </section>
+    </div>
     <footer class="store-footer">Powered by BentaBuddy CRM</footer>
   </main>
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
