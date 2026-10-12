@@ -157,7 +157,7 @@
     if(!supabase||!currentBusinessId){productMessage("Business details are still loading. Please try again.",true);return;}
     productMessage("Loading products…");$("products-list").innerHTML="";
     const {data,error}=await supabase.from("products")
-      .select("id,business_id,product_name,sku,description,selling_price,cost_price,is_active,created_at,updated_at")
+      .select("id,business_id,product_name,sku,description,selling_price,cost_price,image_url,is_published,is_active,created_at,updated_at")
       .eq("business_id",currentBusinessId).eq("is_active",true).order("product_name",{ascending:true});
     if(error){console.error("Product load failed:",error);productMessage("Could not load products. Please check the products table policies.",true);return;}
     productRows=data||[];renderProducts();
@@ -173,7 +173,7 @@
       $("products-list").innerHTML='<div class="empty-customers"><strong>'+(q?"No matching products":"No products yet")+'</strong><p>'+(q?"Try another search term.":"Select “Add product” to save your first product.")+'</p></div>';
       productMessage(q?"No matching products":"0 products saved");return;
     }
-    $("products-list").innerHTML=rows.map(p=>'<article class="customer-card"><div class="customer-card-main"><div class="product-avatar">₱</div><div class="customer-card-details"><h3>'+escapeHtml(p.product_name)+'</h3><p>'+(p.sku?'<span>SKU: '+escapeHtml(p.sku)+'</span>':"")+'<span>Selling: '+money(p.selling_price)+'</span><span>Cost: '+money(p.cost_price)+'</span></p>'+(p.description?'<p class="customer-address">'+escapeHtml(p.description)+'</p>':"")+'</div></div><div class="customer-actions"><button class="secondary" type="button" data-edit-product="'+p.id+'">Edit</button><button class="secondary customer-delete" type="button" data-delete-product="'+p.id+'">Delete</button></div></article>').join("");
+    $("products-list").innerHTML=rows.map(p=>'<article class="customer-card"><div class="customer-card-main"><div class="product-avatar">₱</div><div class="customer-card-details"><h3>'+escapeHtml(p.product_name)+'</h3><p>'+(p.sku?'<span>SKU: '+escapeHtml(p.sku)+'</span>':"")+'<span>Selling: '+money(p.selling_price)+'</span><span>Cost: '+money(p.cost_price)+'</span></p>'+(p.description?'<p class="customer-address">'+escapeHtml(p.description)+'</p>':"")+'<p class="product-publish-status '+(p.is_published?"published":"")+'">'+(p.is_published?"Published in online store":"Not published online")+'</p></div></div><div class="customer-actions"><button class="secondary" type="button" data-edit-product="'+p.id+'">Edit</button><button class="secondary customer-delete" type="button" data-delete-product="'+p.id+'">Delete</button></div></article>').join("");
     productMessage(rows.length+" product"+(rows.length===1?"":"s")+" shown");
   }
   function editProduct(id){
@@ -181,6 +181,7 @@
     $("product-id").value=p.id;$("product-name").value=p.product_name||"";$("product-sku").value=p.sku||"";
     $("product-description").value=p.description||"";$("product-selling-price").value=p.selling_price??"";
     $("product-cost-price").value=p.cost_price??"";
+    $("product-image-url").value=p.image_url||"";$("product-published").checked=p.is_published===true;
     productEditMode=true;$("product-form-title").textContent="Edit product";$("save-product").textContent="Save changes";
     $("product-form").hidden=false;$("product-form").scrollIntoView({behavior:"smooth",block:"start"});$("product-name").focus();
   }
@@ -216,7 +217,9 @@
     if(sku&&productRows.some(p=>String(p.sku||"").toLowerCase()===sku.toLowerCase()&&p.id!==id)){
       productMessage("That SKU is already used by another product. Enter a different SKU.",true);$("product-sku").focus();return;
     }
-    const payload={business_id:currentBusinessId,product_name:name,sku:sku||null,description:$("product-description").value.trim()||null,selling_price:selling,cost_price:cost,is_active:true,updated_at:new Date().toISOString()};
+    const imageUrl=$("product-image-url").value.trim();
+    if(imageUrl&&!/^https?:\/\//i.test(imageUrl)){productMessage("Product image URL must start with http:// or https://.",true);$("product-image-url").focus();return;}
+    const payload={business_id:currentBusinessId,product_name:name,sku:sku||null,description:$("product-description").value.trim()||null,selling_price:selling,cost_price:cost,image_url:imageUrl||null,is_published:$("product-published").checked,is_active:true,updated_at:new Date().toISOString()};
     const button=$("save-product");button.disabled=true;button.textContent="Saving…";
     try{
       let result;
