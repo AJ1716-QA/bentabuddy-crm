@@ -340,7 +340,7 @@
   let followUpRows = [];
   let followUpEditMode = false;
   function showDashboardOnly(){
-    $("customers-panel").hidden=true;$("products-panel").hidden=true;$("leads-panel").hidden=true;$("follow-ups-panel").hidden=true;$("orders-panel").hidden=true;$("order-payment-panel").hidden=true;$("sales-overview-panel").hidden=true;$("profit-overview-panel").hidden=true;
+    $("customers-panel").hidden=true;$("products-panel").hidden=true;$("leads-panel").hidden=true;$("follow-ups-panel").hidden=true;$("orders-panel").hidden=true;$("order-payment-panel").hidden=true;$("sales-overview-panel").hidden=true;$("profit-overview-panel").hidden=true;$("store-settings-panel").hidden=true;
     document.querySelector(".section-title").hidden=false;document.querySelector(".feature-grid").hidden=false;
   }
   function showCustomersPanel(){
@@ -749,6 +749,38 @@
   $("profit-period").addEventListener("change",loadProfitOverview);
   $("refresh-profit-overview").addEventListener("click",loadProfitOverview);
 
+  function storeSettingsMessage(message,isError=false){
+    const el=$("store-settings-message");el.textContent=message;el.classList.toggle("customer-error",isError);
+  }
+  function showStoreSettingsPanel(){
+    $("customers-panel").hidden=true;$("products-panel").hidden=true;$("leads-panel").hidden=true;$("follow-ups-panel").hidden=true;$("orders-panel").hidden=true;$("order-payment-panel").hidden=true;$("sales-overview-panel").hidden=true;$("profit-overview-panel").hidden=true;
+    $("store-settings-panel").hidden=false;
+    document.querySelector(".section-title").hidden=true;document.querySelector(".feature-grid").hidden=true;
+    if(!currentBusinessId){storeSettingsMessage("Business details are still loading. Please try again.",true);return;}
+    $("store-settings-panel").scrollIntoView({behavior:"smooth",block:"start"});
+  }
+  $("open-store-settings").addEventListener("click",showStoreSettingsPanel);
+  $("back-store-dashboard").addEventListener("click",showDashboardOnly);
+  $("store-settings-form").addEventListener("submit",async event=>{
+    event.preventDefault();
+    if(!supabase||!currentBusinessId){storeSettingsMessage("Business details are not ready. Please refresh and try again.",true);return;}
+    const slug=$("store-slug").value.trim().toLowerCase();
+    const enabled=$("storefront-enabled").checked;
+    if(enabled&&!slug){storeSettingsMessage("Enter a store address before enabling your store.",true);$("store-slug").focus();return;}
+    if(slug&&(!/^[a-z0-9]+(?:-[a-z0-9]+)*$/.test(slug)||slug.length<3||slug.length>40)){
+      storeSettingsMessage("Use 3–40 characters: lowercase letters, numbers, and single hyphens between words.",true);$("store-slug").focus();return;
+    }
+    const button=$("save-store-settings");button.disabled=true;button.textContent="Saving…";
+    try{
+      const {error}=await supabase.from("businesses").update({store_slug:slug||null,storefront_enabled:enabled,updated_at:new Date().toISOString()}).eq("id",currentBusinessId);
+      if(error)throw error;
+      storeSettingsMessage("Store settings saved. The public storefront page will be connected in the next step.");
+    }catch(err){
+      console.error("Store settings save failed:",err);
+      storeSettingsMessage(err?.code==="23505"?"That store address is already in use. Choose another one.":(err?.message||"Could not save store settings. Please try again."),true);
+    }finally{button.disabled=false;button.textContent="Save store settings";}
+  });
+
   async function loadDashboard(user) {
     showApp();
     $("user-email").textContent = user.email || "";
@@ -759,7 +791,7 @@
     // The Auth trigger creates these records. The browser only reads them.
     const { data: business, error: businessError } = await supabase
       .from("businesses")
-      .select("id,business_name")
+      .select("id,business_name,store_slug,storefront_enabled,currency_code")
       .eq("owner_id", user.id)
       .maybeSingle();
 
@@ -775,6 +807,9 @@
 
     $("business-title").textContent = business.business_name || "My Business";
     currentBusinessId = business.id;
+    $("store-slug").value = business.store_slug || "";
+    $("storefront-enabled").checked = business.storefront_enabled === true;
+    $("store-settings-message").textContent = "";
     const { data: sub, error: subError } = await supabase
       .from("subscriptions")
       .select("plan_code,status,trial_ends_at,current_period_end")
