@@ -1,0 +1,47 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="theme-color" content="#123b63">
+  <meta name="description" content="Browse products from this BentaBuddy seller.">
+  <title>Online Store · BentaBuddy</title>
+  <link rel="stylesheet" href="./styles.css">
+  <style>
+    body.store-page{background:#f5f7fb;color:#172b45;margin:0;min-height:100vh}
+    .store-shell{max-width:1040px;margin:0 auto;padding:24px 16px 48px}
+    .store-brand{font-weight:800;letter-spacing:.02em;color:#123b63;font-size:14px}
+    .store-header{margin:24px 0 28px;padding:26px;border-radius:20px;background:#fff;border:1px solid #e1e8f0}
+    .store-header h1{font-size:clamp(26px,5vw,40px);line-height:1.12;margin:8px 0 10px;overflow-wrap:anywhere}
+    .store-header p{margin:0;color:#607087;line-height:1.6}
+    .store-eyebrow{font-size:11px;font-weight:800;letter-spacing:.12em;color:#607087;text-transform:uppercase}
+    .store-message{padding:18px;border:1px solid #e1e8f0;border-radius:14px;background:#fff;color:#607087;line-height:1.55}
+    .store-grid{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:16px}
+    .store-product{overflow:hidden;background:#fff;border:1px solid #e1e8f0;border-radius:16px;min-width:0}
+    .store-product-image{display:block;width:100%;aspect-ratio:4/3;object-fit:cover;background:#eef2f7}
+    .store-product-placeholder{aspect-ratio:4/3;display:grid;place-items:center;background:#eef2f7;color:#8a9aaf;font-size:34px}
+    .store-product-content{padding:16px}
+    .store-product h2{font-size:17px;line-height:1.35;margin:0 0 8px;overflow-wrap:anywhere}
+    .store-price{font-size:20px;font-weight:800;color:#123b63;margin:0 0 10px}
+    .store-description{font-size:13px;color:#607087;line-height:1.55;white-space:pre-wrap;overflow-wrap:anywhere}
+    .store-footer{margin-top:28px;text-align:center;color:#718096;font-size:12px}
+    @media(max-width:720px){.store-grid{grid-template-columns:repeat(2,minmax(0,1fr));gap:10px}.store-shell{padding:16px 12px 32px}.store-header{padding:20px;margin:18px 0 20px}.store-product-content{padding:12px}.store-product h2{font-size:15px}.store-price{font-size:18px}}
+    @media(max-width:380px){.store-grid{grid-template-columns:1fr}}
+  </style>
+</head>
+<body class="store-page">
+  <main class="store-shell">
+    <div class="store-brand">BB · BENTABUDDY</div>
+    <header class="store-header">
+      <div class="store-eyebrow">ONLINE STORE</div>
+      <h1 id="store-title">Welcome to our store</h1>
+      <p id="store-subtitle">Browse available products.</p>
+    </header>
+    <div id="store-message" class="store-message" role="status" aria-live="polite">Loading store…</div>
+    <section id="store-products" class="store-grid" aria-label="Published products" hidden></section>
+    <footer class="store-footer">Powered by BentaBuddy CRM</footer>
+  </main>
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+  <script src="./store.js"></script>
+</body>
+</html>
