@@ -1,43 +1,37 @@
-/* Public storefront: only calls the restricted public catalog RPC. */
-(() => {
-  "use strict";
-  const SUPABASE_URL = "https://hvoqsyhbrgeiztvyooym.supabase.co";
-  const SUPABASE_PUBLISHABLE_KEY = "sb_publishable_sC6DNOZq5gehKrCkPkZaYA_AYsUhtyD";
-  const $ = id => document.getElementById(id);
-  const escapeHtml = value => String(value ?? "").replace(/[&<>"']/g, ch => ({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[ch]));
-  const money = (value,currency) => {
-    const amount=Number(value);
-    try{return new Intl.NumberFormat(undefined,{style:"currency",currency:currency||"PHP"}).format(Number.isFinite(amount)?amount:0);}
-    catch{return "₱"+(Number.isFinite(amount)?amount:0).toFixed(2);}
-  };
-  function message(text){$("store-message").textContent=text;$("store-message").hidden=false;}
-  async function start(){
-    const slug=new URLSearchParams(location.search).get("store")?.trim();
-    if(!slug){$("store-title").textContent="Store not found";message("This store link is incomplete. Please ask the seller for their store link.");return;}
-    if(!window.supabase||!window.supabase.createClient){message("The store could not load its service. Please refresh and try again.");return;}
-    const client=window.supabase.createClient(SUPABASE_URL,SUPABASE_PUBLISHABLE_KEY,{auth:{persistSession:false,autoRefreshToken:false,detectSessionInUrl:false}});
-    try{
-      const {data,error}=await client.rpc("get_public_store_catalog",{p_store_slug:slug});
-      if(error)throw error;
-      if(!Array.isArray(data)||!data.length){
-        $("store-title").textContent="Store unavailable";
-        message("This store is not enabled yet or has no published products.");
-        return;
-      }
-      const store=data[0];
-      $("store-title").textContent=store.store_name||"Online Store";
-      $("store-subtitle").textContent="Browse our available products.";
-      document.title=(store.store_name||"Online Store")+" · BentaBuddy";
-      $("store-products").innerHTML=data.map(p=>{
-        const image=p.image_url?'<img class="store-product-image" src="'+escapeHtml(p.image_url)+'" alt="'+escapeHtml(p.product_name)+'" loading="lazy" referrerpolicy="no-referrer">':'<div class="store-product-placeholder" aria-hidden="true">◇</div>';
-        return '<article class="store-product">'+image+'<div class="store-product-content"><h2>'+escapeHtml(p.product_name)+'</h2><p class="store-price">'+escapeHtml(money(p.selling_price,store.currency_code))+'</p>'+(p.description?'<p class="store-description">'+escapeHtml(p.description)+'</p>':'')+'</div></article>';
-      }).join("");
-      $("store-products").hidden=false;
-      $("store-message").hidden=true;
-    }catch(err){
-      console.error("Public store load failed:",err);
-      message("We couldn't load this store right now. Please try again later.");
-    }
-  }
-  start();
+/* Public storefront cart and secure checkout */
+(()=>{"use strict";
+const URL="https://hvoqsyhbrgeiztvyooym.supabase.co",KEY="sb_publishable_sC6DNOZq5gehKrCkPkZaYA_AYsUhtyD",$=id=>document.getElementById(id);
+const esc=v=>String(v??"").replace(/[&<>"']/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]));
+const money=(v,c)=>{try{return new Intl.NumberFormat(undefined,{style:"currency",currency:c||"PHP"}).format(Number(v)||0)}catch{return "₱"+(Number(v)||0).toFixed(2)}};
+let client,products=[],currency="PHP",slug="",cart=new Map(),busy=false;
+function msg(t,err=false){$("store-message").textContent=t;$("store-message").className="store-message"+(err?" error":"");$("store-message").hidden=false}
+function fulfillment(){const pickup=$("checkout-fulfillment").value==="pickup";$("checkout-address-wrap").hidden=pickup;$("checkout-address").required=!pickup}
+function renderCart(){
+ const entries=[...cart].map(([id,qty])=>({p:products.find(p=>p.product_id===id),qty})).filter(x=>x.p);
+ $("cart-count").textContent=entries.reduce((s,x)=>s+x.qty,0);$("cart-empty").hidden=!!entries.length;
+ $("cart-lines").innerHTML=entries.map(({p,qty})=>'<div class="cart-line"><div class="cart-line-main"><strong>'+esc(p.product_name)+'</strong><span>'+esc(money(p.selling_price,currency))+' each</span></div><div class="quantity-control"><button type="button" data-minus="'+p.product_id+'" aria-label="Decrease quantity">−</button><span>'+qty+'</span><button type="button" data-plus="'+p.product_id+'" aria-label="Increase quantity">+</button><button type="button" class="remove-item" data-remove="'+p.product_id+'">Remove</button></div><strong>'+esc(money(Number(p.selling_price)*qty,currency))+'</strong></div>').join("");
+ $("cart-total").textContent=money(entries.reduce((s,x)=>s+Number(x.p.selling_price)*x.qty,0),currency);$("place-order").disabled=busy||!entries.length;
+}
+function renderProducts(){$("store-products").innerHTML=products.map(p=>{const img=p.image_url&&/^https?:\/\//i.test(p.image_url)?'<img class="store-product-image" src="'+esc(p.image_url)+'" alt="'+esc(p.product_name)+'" loading="lazy" referrerpolicy="no-referrer">':'<div class="store-product-placeholder" aria-hidden="true">◇</div>';return '<article class="store-product">'+img+'<div class="store-product-content"><h2>'+esc(p.product_name)+'</h2><p class="store-price">'+esc(money(p.selling_price,currency))+'</p>'+(p.description?'<p class="store-description">'+esc(p.description)+'</p>':'')+'<button class="store-button primary add-to-cart" type="button" data-add="'+p.product_id+'">Add to cart</button></div></article>'}).join("");$("store-products").hidden=false}
+async function submit(e){
+ e.preventDefault();if(busy||!cart.size)return;if(!$("checkout-form").reportValidity())return;
+ busy=true;$("place-order").textContent="Submitting order…";renderCart();$("checkout-message").hidden=true;
+ try{
+ const {data,error}=await client.rpc("submit_public_store_order",{p_store_slug:slug,p_customer_name:$("checkout-name").value.trim(),p_phone:$("checkout-phone").value.trim(),p_email:$("checkout-email").value.trim()||null,p_address:$("checkout-fulfillment").value==="pickup"?null:$("checkout-address").value.trim(),p_fulfillment_method:$("checkout-fulfillment").value,p_items:[...cart].map(([product_id,quantity])=>({product_id,quantity})),p_notes:$("checkout-notes").value.trim()||null});
+ if(error)throw error;const order=Array.isArray(data)?data[0]:data;if(!order||order.order_number==null)throw new Error("No order confirmation was returned. Please contact the seller before trying again.");
+ $("checkout-panel").hidden=true;$("cart-panel").hidden=true;$("store-products").hidden=true;$("store-message").hidden=true;$("order-success-number").textContent=order.order_number;$("order-success-total").textContent=money(order.total_amount,currency);$("order-success").hidden=false;cart.clear();renderCart();
+ }catch(err){console.error("Checkout failed",err);$("checkout-message").textContent=err?.message&&/product|store|quantity|cart|customer|address|phone|delivery|pickup/i.test(err.message)?err.message:"We couldn't submit your order. Please check your details and try again.";$("checkout-message").hidden=false}
+ finally{busy=false;$("place-order").textContent="Place order";renderCart()}
+}
+async function start(){
+ slug=new URLSearchParams(location.search).get("store")?.trim()||"";if(!slug){$("store-title").textContent="Store not found";msg("This store link is incomplete. Please ask the seller for their store link.");return}
+ if(!window.supabase?.createClient){msg("The store could not load its service. Please refresh and try again.");return}
+ client=window.supabase.createClient(URL,KEY,{auth:{persistSession:false,autoRefreshToken:false,detectSessionInUrl:false}});
+ $("checkout-fulfillment").addEventListener("change",fulfillment);$("checkout-form").addEventListener("submit",submit);
+ $("store-products").addEventListener("click",e=>{const b=e.target.closest("[data-add]");if(!b)return;const id=b.dataset.add;if(products.some(p=>p.product_id===id))cart.set(id,Math.min(999,(cart.get(id)||0)+1));renderCart();$("cart-panel").hidden=false});
+ $("cart-lines").addEventListener("click",e=>{const b=e.target.closest("button");if(!b)return;const id=b.dataset.plus||b.dataset.minus||b.dataset.remove;if(!id)return;const n=cart.get(id)||0;if(b.dataset.remove!==undefined||(b.dataset.minus!==undefined&&n<=1))cart.delete(id);else if(b.dataset.plus!==undefined)cart.set(id,Math.min(999,n+1));else cart.set(id,n-1);renderCart()});
+ $("open-checkout").addEventListener("click",()=>{if(!cart.size)return;$("checkout-panel").hidden=false;$("checkout-panel").scrollIntoView({behavior:"smooth",block:"start"})});$("checkout-cancel").addEventListener("click",()=>$("checkout-panel").hidden=true);fulfillment();
+ try{const {data,error}=await client.rpc("get_public_store_catalog",{p_store_slug:slug});if(error)throw error;if(!Array.isArray(data)||!data.length){$("store-title").textContent="Store unavailable";msg("This store is not enabled yet or has no published products.");return}const s=data[0];currency=s.currency_code||"PHP";$("store-title").textContent=s.store_name||"Online Store";$("store-subtitle").textContent="Browse our products and place an order.";document.title=(s.store_name||"Online Store")+" · BentaBuddy";products=data;renderProducts();renderCart();$("store-message").hidden=true;$("store-shopping").hidden=false}catch(err){console.error("Store load failed",err);msg("We couldn't load this store right now. Please try again later.")}
+}
+start();
 })();
