@@ -667,10 +667,11 @@
       const ordersInPeriod=allOrders.filter(o=>inRange(o.order_date));
       const eligibleOrders=ordersInPeriod.filter(o=>!['cancelled','returned'].includes(String(o.status||'').toLowerCase())&&String(o.payment_status||'').toLowerCase()!=='refunded');
       const eligibleIds=new Set(eligibleOrders.map(o=>o.id));
+      const eligibleAllIds=new Set(allOrders.filter(o=>!["cancelled","returned"].includes(String(o.status||"").toLowerCase())&&String(o.payment_status||"").toLowerCase()!=="refunded").map(o=>o.id));
       const paidByOrder={};
       allPayments.forEach(p=>{paidByOrder[p.order_id]=(paidByOrder[p.order_id]||0)+Number(p.amount||0);});
       const sales=eligibleOrders.reduce((sum,o)=>sum+Math.max(0,Number(o.total_amount||0)),0);
-      const collected=allPayments.filter(p=>eligibleIds.has(p.order_id)&&inRange(p.payment_date)).reduce((sum,p)=>sum+Number(p.amount||0),0);
+      const collected=allPayments.filter(p=>eligibleAllIds.has(p.order_id)&&inRange(p.payment_date)).reduce((sum,p)=>sum+Number(p.amount||0),0);
       const balance=eligibleOrders.reduce((sum,o)=>sum+Math.max(0,Number(o.total_amount||0)-(paidByOrder[o.id]||0)),0);
       $("sales-metric-value").textContent=money(sales);
       $("sales-metric-orders").textContent=String(eligibleOrders.length);
