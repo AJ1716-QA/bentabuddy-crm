@@ -11,6 +11,12 @@
     body.store-page{background:#f5f7fb;color:#172b45;margin:0;min-height:100vh}
     .store-shell{max-width:1040px;margin:0 auto;padding:24px 16px 48px}
     .store-brand{font-weight:800;letter-spacing:.02em;color:#123b63;font-size:14px}
+    .store-topbar{display:flex;align-items:center;justify-content:space-between;gap:16px}
+    .store-cart-toggle{position:relative;display:inline-flex;align-items:center;justify-content:center;gap:8px;min-height:44px;padding:8px 13px;border:1px solid #d7e1ed;border-radius:13px;background:#fff;color:#123b63;font:inherit;font-weight:800;cursor:pointer;box-shadow:0 3px 10px rgba(18,59,99,.06)}
+    .store-cart-toggle svg{width:23px;height:23px;fill:none;stroke:currentColor;stroke-width:1.8;stroke-linecap:round;stroke-linejoin:round}
+    .store-cart-badge{display:inline-grid;place-items:center;min-width:22px;height:22px;padding:0 5px;border-radius:999px;background:#123b63;color:#fff;font-size:12px;font-weight:800;box-sizing:border-box}
+    .store-cart-badge[hidden]{display:none}
+    .store-cart-toggle:focus-visible{outline:3px solid #9bbfe7;outline-offset:2px}
     .store-header{margin:24px 0 28px;padding:26px;border-radius:20px;background:#fff;border:1px solid #e1e8f0}
     .store-header h1{font-size:clamp(26px,5vw,40px);line-height:1.12;margin:8px 0 10px;overflow-wrap:anywhere}
     .store-header p{margin:0;color:#607087;line-height:1.6}
@@ -61,7 +67,7 @@
 </head>
 <body class="store-page">
   <main class="store-shell">
-    <div class="store-brand">BB · BENTABUDDY</div>
+    <div class="store-topbar"><div class="store-brand">BB · BENTABUDDY</div><button id="store-cart-toggle" class="store-cart-toggle" type="button" aria-label="Open shopping cart" aria-controls="cart-panel" aria-expanded="false"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M3 4h2l2.1 10.1a2 2 0 0 0 2 1.6h7.8a2 2 0 0 0 1.9-1.4L21 8H6"/><circle cx="10" cy="20" r="1.2"/><circle cx="18" cy="20" r="1.2"/></svg><span class="store-cart-label">Cart</span><span id="store-cart-badge" class="store-cart-badge" hidden>0</span></button></div>
     <header class="store-header">
       <div class="store-eyebrow">ONLINE STORE</div>
       <h1 id="store-title">Welcome to our store</h1>
