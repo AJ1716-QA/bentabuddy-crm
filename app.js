@@ -422,7 +422,7 @@
     const statusLabel={pending:"Pending",completed:"Completed",cancelled:"Cancelled"};
     $("follow-ups-list").innerHTML=rows.map(f=>{
       const overdue=f.status==="pending"&&new Date(f.due_at).getTime()<Date.now();
-      return '<article class="customer-card"><div class="customer-card-main"><div class="product-avatar">⏰</div><div class="customer-card-details"><h3>'+escapeHtml(f.title)+'</h3><p><span class="lead-stage '+(overdue?'follow-up-overdue':'')+'">'+(overdue?'Overdue · ':'')+escapeHtml(statusLabel[f.status]||f.status)+'</span><span><strong>Due:</strong> '+escapeHtml(formatDate(f.due_at))+'</span></p>'+(f.relatedName?'<p class="customer-address"><strong>Linked to:</strong> '+escapeHtml(f.relatedName)+'</p>':'')+(f.notes?'<p class="customer-notes">'+escapeHtml(f.notes)+'</p>':'')+'</div></div><div class="customer-actions"><button class="secondary" type="button" data-edit-follow-up="'+f.id+'">Edit</button><button class="secondary customer-delete" type="button" data-delete-follow-up="'+f.id+'">Delete</button></div></article>';
+      return '<article class="customer-card"><div class="customer-card-main"><div class="product-avatar">⏰</div><div class="customer-card-details"><h3>'+escapeHtml(f.title)+'</h3><p><span class="lead-stage '+(overdue?'follow-up-overdue':'')+'">'+(overdue?'Overdue · ':'')+escapeHtml(statusLabel[f.status]||f.status)+'</span><span><strong>Due:</strong> '+escapeHtml(formatDate(f.due_at))+'</span></p>'+(f.relatedName?'<p class="customer-address"><strong>Linked to:</strong> '+escapeHtml(f.relatedName)+'</p>':'')+(f.notes?'<p class="customer-notes">'+escapeHtml(f.notes)+'</p>':'')+'</div></div><div class="customer-actions">'+(f.status==="pending"?'<button class="secondary" type="button" data-complete-follow-up="'+f.id+'">Mark complete</button>':'')+'<button class="secondary" type="button" data-edit-follow-up="'+f.id+'">Edit</button><button class="secondary customer-delete" type="button" data-delete-follow-up="'+f.id+'">Delete</button></div></article>';
     }).join("");
     followUpMessage(rows.length+" follow-up"+(rows.length===1?"":"s")+" shown");
   }
@@ -445,6 +445,17 @@
   $("cancel-follow-up").addEventListener("click",resetFollowUpForm);
   $("follow-up-search").addEventListener("input",renderFollowUps);
   $("follow-ups-list").addEventListener("click",async event=>{
+    const complete=event.target.closest("[data-complete-follow-up]");
+    if(complete){
+      const id=complete.dataset.completeFollowUp;
+      const f=followUpRows.find(r=>r.id===id);
+      if(!f||f.status!=="pending")return;
+      complete.disabled=true;complete.textContent="Saving…";
+      const now=new Date().toISOString();
+      const {error}=await supabase.from("follow_ups").update({status:"completed",completed_at:now,updated_at:now}).eq("id",id).eq("business_id",currentBusinessId);
+      if(error){console.error("Follow-up completion failed:",error);followUpMessage("Could not mark this follow-up complete. Please try again.",true);complete.disabled=false;complete.textContent="Mark complete";return;}
+      await loadFollowUps();followUpMessage("Follow-up marked as completed.");return;
+    }
     const edit=event.target.closest("[data-edit-follow-up]");if(edit){await editFollowUp(edit.dataset.editFollowUp);return;}
     const del=event.target.closest("[data-delete-follow-up]");if(!del)return;
     const id=del.dataset.deleteFollowUp,f=followUpRows.find(r=>r.id===id);
