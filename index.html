@@ -77,6 +77,19 @@
             <p class="muted field-wide">Use lowercase letters, numbers, and hyphens only. Your public store page will be connected after the storefront is built.</p>
             <label class="field-wide store-toggle-label"><input id="storefront-enabled" type="checkbox"> Enable my online store</label>
             <p class="muted field-wide">Only products marked as published will appear. Enabling the store now will not publish any products by itself.</p>
+            <h3 class="field-wide">Manual payment options</h3>
+            <p class="muted field-wide">Customers pay you directly. Enter only the payment details you want displayed after an order. An order stays unpaid until you confirm the money arrived.</p>
+            <label class="field-wide store-toggle-label"><input id="payment-gcash-enabled" type="checkbox"> Accept GCash</label>
+            <label>GCash mobile number<input id="payment-gcash-number" type="tel" maxlength="40" placeholder="09xx xxx xxxx"></label>
+            <label>GCash account name<input id="payment-gcash-name" maxlength="150" placeholder="Name on GCash account"></label>
+            <label class="field-wide store-toggle-label"><input id="payment-maya-enabled" type="checkbox"> Accept Maya</label>
+            <label>Maya mobile number<input id="payment-maya-number" type="tel" maxlength="40" placeholder="09xx xxx xxxx"></label>
+            <label>Maya account name<input id="payment-maya-name" maxlength="150" placeholder="Name on Maya account"></label>
+            <label class="field-wide store-toggle-label"><input id="payment-bank-enabled" type="checkbox"> Accept bank transfer</label>
+            <label>Bank name<input id="payment-bank-name" maxlength="120" placeholder="e.g. BPI, BDO, Metrobank"></label>
+            <label>Bank account name<input id="payment-bank-account-name" maxlength="150" placeholder="Name on bank account"></label>
+            <label>Bank account number<input id="payment-bank-account-number" maxlength="80" inputmode="numeric" placeholder="Account number"></label>
+            <label class="field-wide">Payment instructions (optional)<textarea id="payment-notes" rows="3" maxlength="1000" placeholder="e.g. Send your payment reference and order number to our Facebook page."></textarea></label>
           </div>
           <div class="customer-form-actions"><button id="save-store-settings" class="primary" type="submit">Save store settings</button></div>
         </form>
