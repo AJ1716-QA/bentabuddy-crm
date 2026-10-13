@@ -99,6 +99,24 @@
       body.store-page .store-price{font-size:19px}
     }
 
+
+    /* Explicit storefront layout: keep branding and cart on one row; catalog below. */
+    html,body{width:100%!important;max-width:100%!important;overflow-x:hidden!important}
+    body.store-page .store-shell{display:block!important;width:100%!important;max-width:1320px!important;margin-left:auto!important;margin-right:auto!important}
+    body.store-page .store-topbar{display:grid!important;grid-template-columns:minmax(0,1fr) auto!important;align-items:center!important;column-gap:16px!important;row-gap:0!important;width:100%!important;min-width:0!important}
+    body.store-page #store-title.store-brand{display:block!important;width:auto!important;max-width:100%!important;min-width:0!important;flex:none!important;white-space:normal!important;word-break:normal!important;overflow-wrap:anywhere!important}
+    body.store-page .store-cart-wrap{display:block!important;width:auto!important;min-width:max-content!important;max-width:100%!important;justify-self:end!important}
+    body.store-page .store-cart-toggle{display:inline-flex!important;width:auto!important;max-width:100%!important}
+    body.store-page .store-header,body.store-page #store-message,body.store-page #store-shopping,body.store-page #store-products{width:100%!important;max-width:100%!important;min-width:0!important}
+    body.store-page #store-products.store-grid{display:grid!important;grid-template-columns:repeat(4,minmax(0,1fr))!important;align-items:stretch!important;gap:20px!important}
+    body.store-page #store-products .store-product{display:flex!important;width:100%!important;min-width:0!important;max-width:100%!important}
+    body.store-page #store-products .store-product-image{display:block!important;width:100%!important;max-width:100%!important;aspect-ratio:1/1!important;object-fit:cover!important}
+    body.store-page #store-products .store-product-content{display:flex!important;flex:1 1 auto!important;flex-direction:column!important;width:100%!important;min-width:0!important}
+    body.store-page #store-products .store-button.primary{display:flex!important;width:100%!important;min-width:0!important}
+    @media(max-width:960px){body.store-page #store-products.store-grid{grid-template-columns:repeat(3,minmax(0,1fr))!important;gap:14px!important}}
+    @media(max-width:700px){body.store-page .store-shell{padding:16px 12px 28px!important}body.store-page #store-products.store-grid{grid-template-columns:repeat(2,minmax(0,1fr))!important;gap:10px!important}body.store-page .store-topbar{padding:14px!important;column-gap:10px!important}body.store-page #store-title.store-brand{font-size:clamp(20px,5.5vw,28px)!important}body.store-page #store-products .store-product-content{padding:12px!important}}
+    @media(max-width:350px){body.store-page #store-products.store-grid{grid-template-columns:1fr!important}}
+
     /* Storefront visual polish: clean catalog, clear hierarchy, mobile-first controls */
     body.store-page{background:linear-gradient(180deg,#edf3fa 0,#f7f9fc 260px,#f7f9fc 100%)}
     body.store-page .store-shell{max-width:1320px!important;padding-top:28px!important}
@@ -153,6 +171,6 @@
     <footer class="store-footer">Powered by BentaBuddy CRM</footer>
   </main>
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
-  <script src="./store.js?v=20261013-storefront-polish-1"></script>
+  <script src="./store.js?v=20261013-storefront-layout-fix-2"></script>
 </body>
 </html>
