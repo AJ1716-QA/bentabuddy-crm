@@ -117,12 +117,13 @@ body.store-page .store-footer{display:block!important;width:100%!important;clear
         <h2>Order submitted successfully</h2>
         <p>Your order number is <strong id="order-success-number"></strong>.</p>
         <p>Order total: <strong id="order-success-total"></strong>.</p>
-        <p>Your order is pending and unpaid. Please wait for the seller to confirm the order and payment arrangements.</p>
+        <p>Your order is pending and unpaid. Please pay the seller directly using the instructions below. Your order remains unpaid until the seller confirms receipt of your payment.</p>
+        <section id="order-payment-instructions" class="store-section" hidden aria-label="Seller payment instructions"></section>
       </section>
       <footer class="store-footer">Powered by BentaBuddy CRM</footer>
     </div>
   </main>
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
-  <script src="./store.js?v=20261013-cart-stay-open-1"></script>
+  <script src="./store.js?v=20261013-manual-payments-1"></script>
 </body>
 </html>
