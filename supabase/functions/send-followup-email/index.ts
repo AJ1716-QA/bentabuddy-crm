@@ -130,8 +130,15 @@ Deno.serve(async (req) => {
 
     const result = await emailResponse.json();
     if (!emailResponse.ok) {
-      console.error("Resend rejected the email:", result);
-      return jsonResponse({ error: "Resend could not send the email." }, emailResponse.status);
+      console.error("Resend rejected the email:", {
+        status: emailResponse.status,
+        name: result?.name,
+        message: result?.message,
+      });
+      const safeMessage = typeof result?.message === "string" && result.message.length < 500
+        ? result.message
+        : "Resend rejected the email. Check the Resend dashboard for the detailed error.";
+      return jsonResponse({ error: safeMessage }, emailResponse.status);
     }
 
     return jsonResponse({ success: true, message: "Email accepted by Resend.", id: result.id });
