@@ -99,6 +99,39 @@
       body.store-page .store-product h2{font-size:16px}
       body.store-page .store-price{font-size:19px}
     }
+
+    /* Storefront visual polish: clean catalog, clear hierarchy, mobile-first controls */
+    body.store-page{background:linear-gradient(180deg,#edf3fa 0,#f7f9fc 260px,#f7f9fc 100%)}
+    body.store-page .store-shell{max-width:1320px!important;padding-top:28px!important}
+    body.store-page .store-topbar{padding:18px 20px!important;margin-bottom:16px!important;background:rgba(255,255,255,.92)!important;border:1px solid #e0e8f2!important;border-radius:20px!important;box-shadow:0 8px 28px rgba(18,59,99,.06)!important}
+    body.store-page .store-brand{letter-spacing:-.045em!important}
+    body.store-page .store-cart-toggle{border-color:#cbd8e8!important;transition:transform .15s ease,box-shadow .15s ease,background .15s ease}
+    body.store-page .store-cart-toggle:hover{background:#f5f8fc;box-shadow:0 5px 14px rgba(18,59,99,.12);transform:translateY(-1px)}
+    body.store-page .store-header{margin:0 0 22px!important;padding:0 4px!important}
+    body.store-page .store-header p{font-size:15px!important}
+    body.store-page #store-products.store-grid{gap:20px!important}
+    body.store-page .store-product{border-color:#e0e7f0!important;border-radius:18px!important;box-shadow:0 6px 22px rgba(18,59,99,.055)!important;transition:transform .18s ease,box-shadow .18s ease,border-color .18s ease}
+    body.store-page .store-product:hover{transform:translateY(-3px);border-color:#c7d7eb!important;box-shadow:0 14px 30px rgba(18,59,99,.11)!important}
+    body.store-page .store-product-image,body.store-page .store-product-placeholder{aspect-ratio:1/1!important}
+    body.store-page .store-product-content{padding:17px!important}
+    body.store-page .store-product h2{font-size:16px!important;line-height:1.4!important}
+    body.store-page .store-price{font-size:21px!important;letter-spacing:-.025em}
+    body.store-page .store-description{font-size:13px!important}
+    body.store-page .store-button.primary{box-shadow:0 5px 12px rgba(18,59,99,.13);transition:background .15s ease,transform .15s ease}
+    body.store-page .store-button.primary:hover{background:#1a4d7e;transform:translateY(-1px)}
+    body.store-page .store-cart-popover{border-color:#d9e3ef!important;box-shadow:0 22px 60px rgba(15,35,60,.24)!important}
+    body.store-page .store-footer{border-top:1px solid #e4eaf2;margin-top:42px!important}
+    @media(max-width:960px){
+      body.store-page #store-products.store-grid{gap:14px!important}
+    }
+    @media(max-width:700px){
+      body.store-page .store-shell{padding:16px 12px 28px!important}
+      body.store-page .store-topbar{padding:14px!important;border-radius:16px!important}
+      body.store-page #store-products.store-grid{gap:10px!important}
+      body.store-page .store-product-content{padding:12px!important}
+      body.store-page .store-product-image,body.store-page .store-product-placeholder{aspect-ratio:1/1!important}
+      body.store-page .store-price{font-size:18px!important}
+    }
   </style>
 </head>
 <body class="store-page">
@@ -121,6 +154,6 @@
     <footer class="store-footer">Powered by BentaBuddy CRM</footer>
   </main>
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
-  <script src="./store.js?v=20261012-store-layout-clean-1"></script>
+  <script src="./store.js?v=20261013-storefront-polish-1"></script>
 </body>
 </html>
