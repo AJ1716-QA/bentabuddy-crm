@@ -168,6 +168,19 @@
     body.store-page #store-products.store-grid{width:100%!important}
     @media(max-width:700px){body.store-page .store-footer{margin-top:24px!important;padding-top:16px!important;font-size:12px!important}}
 
+      /* Mobile layout override */
+    @media (max-width: 700px) {
+      body.store-page .store-topbar { display:grid!important; grid-template-columns:minmax(0,1fr) auto!important; }
+      body.store-page .store-brand-group { grid-column:1!important; grid-row:1!important; }
+      body.store-page .store-cart-wrap { grid-column:2!important; grid-row:1!important; }
+      body.store-page #store-shopping { display:block!important; width:100%!important; }
+      body.store-page #store-products.store-grid { display:grid!important; grid-template-columns:repeat(2,minmax(0,1fr))!important; width:100%!important; gap:12px!important; }
+      body.store-page #store-products .store-product { width:100%!important; min-width:0!important; }
+      body.store-page #store-products .store-product-content { padding:10px!important; }
+      body.store-page #store-products .store-button.primary { width:100%!important; font-size:12px!important; padding:9px 3px!important; }
+      body.store-page .store-footer { display:block!important; width:100%!important; }
+    }
+    @media (max-width:350px) { body.store-page #store-products.store-grid { grid-template-columns:repeat(2,minmax(0,1fr))!important; } }
   </style>
 </head>
 <body class="store-page">
@@ -187,6 +200,6 @@
     <footer class="store-footer">Powered by BentaBuddy CRM</footer>
   </main>
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
-  <script src="./store.js?v=20261013-storefront-layout-fix-2"></script>
+  <script src="./store.js?v=20261013-mobile-layout-override"></script>
 </body>
 </html>
