@@ -457,8 +457,17 @@
       emailButton.disabled=true;emailButton.textContent="Sending…";
       const {data,error}=await supabase.functions.invoke("send-followup-email",{body:{followUpId:f.id}});
       if(error||!data?.success){
-        console.error("Follow-up email failed:",error||data);
-        followUpMessage(data?.error||error?.message||"Could not send the email. Please try again.",true);
+        let detail=data?.error||"";
+        if(error?.context){
+          try{
+            const responseBody=await error.context.clone().json();
+            detail=responseBody?.error||responseBody?.message||detail;
+          }catch(_){
+            try{const responseText=await error.context.clone().text();if(responseText)detail=responseText.slice(0,300);}catch(__){}
+          }
+        }
+        console.error("Follow-up email failed:",{message:error?.message,detail,error});
+        followUpMessage(detail||error?.message||"Could not send the email. Please try again.",true);
         emailButton.disabled=false;emailButton.textContent="Send email";return;
       }
       followUpMessage("Email accepted by Resend for "+f.relatedName+".");
