@@ -602,7 +602,7 @@
     $("orders-panel").hidden=true;$("order-payment-panel").hidden=false;$("payment-order-id").value=o.id;
     $("payment-order-title").textContent="Payments · Order #"+o.order_number;
     $("payment-order-summary").textContent=o.customerName+" · Total "+money(o.total_amount)+" · Paid "+money(o.paidAmount)+" · Balance "+money(o.balance);
-    $("payment-date").value=localDateTime();$("payment-amount").value=o.balance>0?o.balance:"";$("payment-method").value="cash";$("payment-reference").value="";$("payment-notes").value="";
+    $("payment-date").value=localDateTime();$("payment-amount").value=o.balance>0?o.balance:"";$("payment-method").value="cash";$("payment-reference").value="";$("order-payment-notes").value="";
     await loadOrderPayments(id);$("order-payment-panel").scrollIntoView({behavior:"smooth",block:"start"});
   }
   async function loadOrderPayments(orderId){
@@ -671,7 +671,7 @@
     button.disabled=true;button.textContent="Saving…";
     try{
       const paymentDate=$("payment-date").value?new Date($("payment-date").value).toISOString():new Date().toISOString();
-      const {error}=await supabase.from("order_payments").insert({business_id:currentBusinessId,order_id:orderId,amount,payment_method:$("payment-method").value,payment_date:paymentDate,reference_number:$("payment-reference").value.trim()||null,notes:$("payment-notes").value.trim()||null});if(error)throw error;
+      const {error}=await supabase.from("order_payments").insert({business_id:currentBusinessId,order_id:orderId,amount,payment_method:$("payment-method").value,payment_date:paymentDate,reference_number:$("payment-reference").value.trim()||null,notes:$("order-payment-notes").value.trim()||null});if(error)throw error;
       const {data:payments,error:paymentsError}=await supabase.from("order_payments").select("amount").eq("business_id",currentBusinessId).eq("order_id",orderId);if(paymentsError)throw paymentsError;
       const totalPaid=(payments||[]).reduce((sum,p)=>sum+Number(p.amount||0),0),target=orderRows.find(o=>o.id===orderId);
       const paymentStatus=totalPaid<=0?"unpaid":totalPaid+0.005>=Number(target?.total_amount||0)?"paid":"partial";
@@ -821,6 +821,7 @@
   $("store-settings-form").addEventListener("submit",async event=>{
     event.preventDefault();
     if(!supabase||!currentBusinessId){storeSettingsMessage("Business details are not ready. Please refresh and try again.",true);return;}
+    storeSettingsMessage("Saving store and payment settings…");
     const slug=$("store-slug").value.trim().toLowerCase();
     const enabled=$("storefront-enabled").checked;
     if(enabled&&!slug){storeSettingsMessage("Enter a store address before enabling your store.",true);$("store-slug").focus();return;}
