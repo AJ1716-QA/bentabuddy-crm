@@ -425,7 +425,7 @@
     const statusLabel={pending:"Pending",completed:"Completed",cancelled:"Cancelled"};
     $("follow-ups-list").innerHTML=rows.map(f=>{
       const overdue=f.status==="pending"&&new Date(f.due_at).getTime()<Date.now();
-      const canEmail=!!f.relatedEmail&&/^[^\\s@]+@[^\\s@]+\\.[^\\s@]+$/.test(f.relatedEmail.trim());
+      const canEmail=!!f.relatedEmail&&/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(f.relatedEmail.trim());
       return '<article class="customer-card"><div class="customer-card-main"><div class="product-avatar">⏰</div><div class="customer-card-details"><h3>'+escapeHtml(f.title)+'</h3><p><span class="lead-stage '+(overdue?'follow-up-overdue':'')+'">'+(overdue?'Overdue · ':'')+escapeHtml(statusLabel[f.status]||f.status)+'</span><span><strong>Due:</strong> '+escapeHtml(formatDate(f.due_at))+'</span></p>'+(f.relatedName?'<p class="customer-address"><strong>Linked to:</strong> '+escapeHtml(f.relatedName)+'</p>':'')+(f.notes?'<p class="customer-notes">'+escapeHtml(f.notes)+'</p>':'')+'</div></div><div class="customer-actions">'+(canEmail?'<button class="secondary" type="button" data-email-follow-up="'+f.id+'">Send email</button>':'')+(f.status==="pending"?'<button class="secondary" type="button" data-complete-follow-up="'+f.id+'">Mark complete</button>':'')+'<button class="secondary" type="button" data-edit-follow-up="'+f.id+'">Edit</button><button class="secondary customer-delete" type="button" data-delete-follow-up="'+f.id+'">Delete</button></div></article>';
     }).join("");
     followUpMessage(rows.length+" follow-up"+(rows.length===1?"":"s")+" shown");
