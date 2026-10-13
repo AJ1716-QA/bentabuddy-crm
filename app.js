@@ -829,10 +829,27 @@
     }
     const button=$("save-store-settings");button.disabled=true;button.textContent="Saving…";
     try{
-      const {error}=await supabase.from("businesses").update({store_slug:slug||null,storefront_enabled:enabled,updated_at:new Date().toISOString()}).eq("id",currentBusinessId);
-      if(error)throw error;
+      const {error:businessSaveError}=await supabase.from("businesses").update({store_slug:slug||null,storefront_enabled:enabled,updated_at:new Date().toISOString()}).eq("id",currentBusinessId);
+      if(businessSaveError)throw businessSaveError;
+      const paymentPayload={
+        business_id:currentBusinessId,
+        gcash_enabled:$("payment-gcash-enabled").checked,
+        gcash_number:$("payment-gcash-number").value.trim()||null,
+        gcash_account_name:$("payment-gcash-name").value.trim()||null,
+        maya_enabled:$("payment-maya-enabled").checked,
+        maya_number:$("payment-maya-number").value.trim()||null,
+        maya_account_name:$("payment-maya-name").value.trim()||null,
+        bank_enabled:$("payment-bank-enabled").checked,
+        bank_name:$("payment-bank-name").value.trim()||null,
+        bank_account_name:$("payment-bank-account-name").value.trim()||null,
+        bank_account_number:$("payment-bank-account-number").value.trim()||null,
+        payment_notes:$("payment-notes").value.trim()||null,
+        updated_at:new Date().toISOString()
+      };
+      const {error:paymentSaveError}=await supabase.from("store_payment_settings").upsert(paymentPayload,{onConflict:"business_id"});
+      if(paymentSaveError)throw paymentSaveError;
       updateStorePublicLink(slug,enabled);
-      storeSettingsMessage("Store settings saved.");
+      storeSettingsMessage("Store and payment settings saved.");
     }catch(err){
       console.error("Store settings save failed:",err);
       storeSettingsMessage(err?.code==="23505"?"That store address is already in use. Choose another one.":(err?.message||"Could not save store settings. Please try again."),true);
@@ -904,6 +921,27 @@
     $("storefront-enabled").checked = business.storefront_enabled === true;
     $("store-settings-message").textContent = "";
     updateStorePublicLink(business.store_slug, business.storefront_enabled);
+    const {data:paymentSettings,error:paymentSettingsError}=await supabase
+      .from("store_payment_settings")
+      .select("gcash_enabled,gcash_number,gcash_account_name,maya_enabled,maya_number,maya_account_name,bank_enabled,bank_name,bank_account_name,bank_account_number,payment_notes")
+      .eq("business_id",business.id)
+      .maybeSingle();
+    if(paymentSettingsError){
+      console.error("Payment settings load failed:",paymentSettingsError);
+      storeSettingsMessage("Store loaded, but payment settings could not be loaded. Please check the database permissions.",true);
+    }else if(paymentSettings){
+      $("payment-gcash-enabled").checked=paymentSettings.gcash_enabled===true;
+      $("payment-gcash-number").value=paymentSettings.gcash_number||"";
+      $("payment-gcash-name").value=paymentSettings.gcash_account_name||"";
+      $("payment-maya-enabled").checked=paymentSettings.maya_enabled===true;
+      $("payment-maya-number").value=paymentSettings.maya_number||"";
+      $("payment-maya-name").value=paymentSettings.maya_account_name||"";
+      $("payment-bank-enabled").checked=paymentSettings.bank_enabled===true;
+      $("payment-bank-name").value=paymentSettings.bank_name||"";
+      $("payment-bank-account-name").value=paymentSettings.bank_account_name||"";
+      $("payment-bank-account-number").value=paymentSettings.bank_account_number||"";
+      $("payment-notes").value=paymentSettings.payment_notes||"";
+    }
     const { data: sub, error: subError } = await supabase
       .from("subscriptions")
       .select("plan_code,status,trial_ends_at,current_period_end")
