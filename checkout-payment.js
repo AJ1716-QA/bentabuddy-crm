@@ -2,6 +2,8 @@
 (()=>{"use strict";
 const URL="https://hvoqsyhbrgeiztvyooym.supabase.co";
 const KEY="sb_publishable_sC6DNOZq5gehKrCkPkZaYA_AYsUhtyD";
+const confirmation=document.getElementById("order-success");
+if(confirmation){new MutationObserver(()=>{if(!confirmation.hidden)confirmation.scrollIntoView({behavior:"smooth",block:"start"});}).observe(confirmation,{attributes:true,attributeFilter:["hidden"]});}
 const target=document.getElementById("checkout-payment-instructions");
 if(!target||!window.supabase?.createClient)return;
 const esc=v=>String(v??"").replace(/[&<>"']/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]));
