@@ -120,8 +120,6 @@ body.store-page #order-payment-instructions p{margin:5px 0;font-size:12px;line-h
     </header>
     <div id="store-message" class="store-message" role="status" aria-live="polite">Loading store…</div>
     <div id="store-shopping" hidden>
-      <section id="store-products" class="store-grid" aria-label="Published products" hidden></section>
-      
       <section id="order-success" class="order-success" hidden role="status" aria-live="polite">
         <h2>Order submitted successfully</h2>
         <p>Your order number is <strong id="order-success-number"></strong>.</p>
@@ -129,6 +127,9 @@ body.store-page #order-payment-instructions p{margin:5px 0;font-size:12px;line-h
         <p>Order pending · Unpaid. Pay the seller using the details below. The seller will confirm your payment.</p>
         <section id="order-payment-instructions" class="store-section" hidden aria-label="Seller payment instructions"></section>
       </section>
+      <section id="store-products" class="store-grid" aria-label="Published products" hidden></section>
+      
+      
       <footer class="store-footer">Powered by BentaBuddy CRM</footer>
     </div>
   </main>
