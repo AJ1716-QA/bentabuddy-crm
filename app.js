@@ -667,16 +667,23 @@
   $("cancel-payment").addEventListener("click",()=>{$("payment-form").reset();$("payment-date").value=localDateTime();});
   $("payment-form").addEventListener("submit",async event=>{
     event.preventDefault();const orderId=$("payment-order-id").value,amount=Number($("payment-amount").value),button=$("save-payment");
-    if(!orderId||!currentBusinessId||!(amount>0)){paymentMessage("Enter a valid payment amount.",true);return;}
+    if(!orderId||!currentBusinessId||!Number.isFinite(amount)||amount<=0){paymentMessage("Enter a valid payment amount.",true);return;}
     button.disabled=true;button.textContent="Saving…";
     try{
       const paymentDate=$("payment-date").value?new Date($("payment-date").value).toISOString():new Date().toISOString();
-      const {error}=await supabase.from("order_payments").insert({business_id:currentBusinessId,order_id:orderId,amount,payment_method:$("payment-method").value,payment_date:paymentDate,reference_number:$("payment-reference").value.trim()||null,notes:$("order-payment-notes").value.trim()||null});if(error)throw error;
-      const {data:payments,error:paymentsError}=await supabase.from("order_payments").select("amount").eq("business_id",currentBusinessId).eq("order_id",orderId);if(paymentsError)throw paymentsError;
-      const totalPaid=(payments||[]).reduce((sum,p)=>sum+Number(p.amount||0),0),target=orderRows.find(o=>o.id===orderId);
-      const paymentStatus=totalPaid<=0?"unpaid":totalPaid+0.005>=Number(target?.total_amount||0)?"paid":"partial";
-      const paymentUpdate={payment_status:paymentStatus,updated_at:new Date().toISOString()};if(paymentStatus==="paid"&&target&&["pending","confirmed"].includes(target.status))paymentUpdate.status="processing";const {error:updateError}=await supabase.from("orders").update(paymentUpdate).eq("id",orderId).eq("business_id",currentBusinessId);if(updateError)throw updateError;
+      const {data,error}=await supabase.rpc("record_manual_order_payment",{
+        p_business_id:currentBusinessId,
+        p_order_id:orderId,
+        p_amount:amount,
+        p_payment_method:$("payment-method").value,
+        p_payment_date:paymentDate,
+        p_reference_number:$("payment-reference").value.trim()||null,
+        p_notes:$("order-payment-notes").value.trim()||null
+      });
+      if(error)throw error;
+      if(!data||!data.length)throw new Error("The payment was not confirmed by the database. Refresh the order and check before trying again.");
       $("payment-form").reset();$("payment-date").value=localDateTime();await loadOrders();await openOrderPayments(orderId);
+      paymentMessage("Payment recorded. Confirm that the money was received before saving future payments.");
     }catch(err){console.error("Payment save failed:",err);paymentMessage(err?.message||"Could not save this payment. Please try again.",true);}
     finally{button.disabled=false;button.textContent="Save payment";}
   });
