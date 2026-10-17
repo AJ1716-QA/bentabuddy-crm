@@ -38,9 +38,22 @@ Deno.serve(async (req) => {
     if (!/^[a-zA-Z0-9-]{1,100}$/.test(storeSlug) || !/^\d{1,20}$/.test(orderNumber)) {
       return respond({ error: "The store or order number is invalid." }, 400);
     }
-    if (typeof endpoint !== "string" || !endpoint.startsWith("https://") ||
+    if (typeof endpoint !== "string" ||
         typeof p256dh !== "string" || typeof auth !== "string") {
       return respond({ error: "This device's notification subscription is invalid." }, 400);
+    }
+    const endpointUrl = new URL(endpoint);
+    const host = endpointUrl.hostname.toLowerCase();
+    const allowedPushHost =
+      host === "fcm.googleapis.com" ||
+      host.endsWith(".googleapis.com") ||
+      host === "push.services.mozilla.com" ||
+      host.endsWith(".push.services.mozilla.com") ||
+      host === "updates.push.services.mozilla.com" ||
+      host === "web.push.apple.com" ||
+      host.endsWith(".notify.windows.com");
+    if (endpointUrl.protocol !== "https:" || !allowedPushHost) {
+      return respond({ error: "This browser's push service is not supported." }, 400);
     }
 
     // Only accept a same-site storefront URL, so notification clicks cannot redirect elsewhere.
