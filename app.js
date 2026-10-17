@@ -68,6 +68,7 @@
   let currentBusinessId = null;
   let notificationRows = [];
   let notificationPollTimer = null;
+  let knownNotificationIds = null;
   let customerRows = [];
   let customerEditMode = false;
   function showDashboardOnly(){ $("customers-panel").hidden=true; document.querySelector(".section-title").hidden=false; document.querySelector(".feature-grid").hidden=false; }
@@ -877,7 +878,21 @@
     if(!supabase||!currentBusinessId)return;
     const {data,error}=await supabase.from("notifications").select("id,business_id,order_id,title,message,is_read,created_at").eq("business_id",currentBusinessId).order("created_at",{ascending:false}).limit(30);
     if(error){console.error("Notification load failed:",error);notificationMessage("Could not load notifications. Please check the notifications table policies.",true);return;}
-    notificationRows=data||[];renderNotifications();
+    const nextRows=data||[];
+    if(knownNotificationIds!==null&&"Notification" in window&&Notification.permission==="granted"){
+      nextRows.filter(n=>!knownNotificationIds.has(n.id)).forEach(n=>{
+        try{new Notification(n.title||"BentaBuddy update",{body:n.message||"You have a new store notification.",tag:"bentabuddy-"+n.id,icon:"./icons/icon-192.png"});}catch(err){console.warn("Browser notification could not be shown:",err);}
+      });
+    }
+    knownNotificationIds=new Set(nextRows.map(n=>n.id));
+    notificationRows=nextRows;renderNotifications();
+  }
+  async function enableBrowserNotifications(){
+    if(!("Notification" in window)){notificationMessage("This browser does not support notifications. In-app notifications will still work.",true);return;}
+    if(Notification.permission==="granted"){notificationMessage("Browser notifications are already enabled.");return;}
+    if(Notification.permission==="denied"){notificationMessage("Notifications are blocked by your browser. Allow them in the site settings, then refresh.");return;}
+    const permission=await Notification.requestPermission();
+    notificationMessage(permission==="granted"?"Browser notifications enabled. Keep BentaBuddy open to receive new-order alerts.":"Browser notifications were not enabled. In-app notifications will still work.",permission!=="granted");
   }
   async function openNotifications(){
     document.querySelectorAll(".customers-panel").forEach(panel=>panel.hidden=true);
@@ -886,6 +901,7 @@
     notificationMessage("Loading notifications…");await loadNotifications();
     $("notifications-panel").scrollIntoView({behavior:"smooth",block:"start"});
   }
+  $("enable-browser-notifications").addEventListener("click",enableBrowserNotifications);
   $("notification-bell").addEventListener("click",()=>{if(!$("notifications-panel").hidden){$("notifications-panel").hidden=true;$("notification-bell").setAttribute("aria-expanded","false");document.querySelector(".section-title").hidden=false;document.querySelector(".feature-grid").hidden=false;}else{openNotifications();}});
   $("back-notifications-dashboard").addEventListener("click",()=>{ $("notifications-panel").hidden=true;$("notification-bell").setAttribute("aria-expanded","false");document.querySelector(".section-title").hidden=false;document.querySelector(".feature-grid").hidden=false;window.scrollTo({top:0,behavior:"smooth"}); });
   $("notifications-list").addEventListener("click",async event=>{
@@ -1007,7 +1023,7 @@
 
       supabase.auth.onAuthStateChange((event, sessionNow) => {
         if (event === "SIGNED_OUT" || !sessionNow?.user) {
-          currentBusinessId=null;notificationRows=[];if(notificationPollTimer){clearInterval(notificationPollTimer);notificationPollTimer=null;}showAuth();
+          currentBusinessId=null;notificationRows=[];knownNotificationIds=null;if(notificationPollTimer){clearInterval(notificationPollTimer);notificationPollTimer=null;}showAuth();
         } else if (event === "SIGNED_IN" || event === "TOKEN_REFRESHED" || event === "USER_UPDATED") {
           // Avoid heavy queries inside the auth callback.
           setTimeout(() => loadDashboard(sessionNow.user), 0);
