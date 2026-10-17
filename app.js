@@ -881,7 +881,7 @@
     const nextRows=data||[];
     if(knownNotificationIds!==null&&"Notification" in window&&Notification.permission==="granted"){
       nextRows.filter(n=>!knownNotificationIds.has(n.id)).forEach(n=>{
-        try{new Notification(n.title||"BentaBuddy update",{body:n.message||"You have a new store notification.",tag:"bentabuddy-"+n.id,icon:"./icons/icon-192.png"});}catch(err){console.warn("Browser notification could not be shown:",err);}
+        try{new Notification(n.title||"BentaBuddy update",{body:n.message||"You have a new store notification.",tag:"bentabuddy-"+n.id,icon:"./icons/icon.svg"});}catch(err){console.warn("Browser notification could not be shown:",err);}
       });
     }
     knownNotificationIds=new Set(nextRows.map(n=>n.id));
