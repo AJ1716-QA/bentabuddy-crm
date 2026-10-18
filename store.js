@@ -20,6 +20,12 @@ function applyStoreDesign(d){
  const theme=["classic","fresh","bold"].includes(d.theme)?d.theme:"classic";
  $("store-header-row").dataset.theme=theme;
  $("store-subtitle").textContent=d.welcome_message||"Browse our products and place an order.";
+ const description=$("store-description");
+ description.textContent=d.description||"";
+ description.hidden=!d.description;
+ const layout=["grid","compact","list"].includes(d.layout)?d.layout:"grid";
+ $("store-products").classList.remove("layout-grid","layout-compact","layout-list");
+ $("store-products").classList.add("layout-"+layout);
  const logo=$("store-logo-image"),cover=$("store-cover-image");
  if(d.logo_url&&/^https?:\/\//i.test(d.logo_url)){logo.src=d.logo_url;logo.hidden=false;}else{logo.removeAttribute("src");logo.hidden=true;}
  if(d.cover_image_url&&/^https?:\/\//i.test(d.cover_image_url)){cover.src=d.cover_image_url;cover.hidden=false;}else{cover.removeAttribute("src");cover.hidden=true;}
