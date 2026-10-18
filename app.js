@@ -843,13 +843,14 @@
     const logoEl=$("design-preview-logo");
     if(/^https?:\/\//i.test(logo)){logoEl.src=logo;logoEl.hidden=false;}else{logoEl.removeAttribute("src");logoEl.hidden=true;}
     const coverEl=$("design-preview-cover");
-    if(/^https?:\/\//i.test(cover)){coverEl.style.backgroundImage='url("'+cover.replace(/["\\]/g,"\\  function showStoreSettingsPanel(){
+    if(/^https?:\/\//i.test(cover)){coverEl.style.backgroundImage='url("'+cover.replace(/["\\\n\r]/g,"")+'")';coverEl.hidden=false;}else{coverEl.style.backgroundImage="none";coverEl.hidden=true;}
+  }
+  function showStoreSettingsPanel(){
     $("customers-panel").hidden=true;$("products-panel").hidden=true;$("leads-panel").hidden=true;$("follow-ups-panel").hidden=true;$("orders-panel").hidden=true;$("order-payment-panel").hidden=true;$("sales-overview-panel").hidden=true;$("profit-overview-panel").hidden=true;
     $("store-settings-panel").hidden=false;
     document.querySelector(".section-title").hidden=true;document.querySelector(".feature-grid").hidden=true;
     if(!currentBusinessId){storeSettingsMessage("Business details are still loading. Please try again.",true);return;}
     $("store-settings-panel").scrollIntoView({behavior:"smooth",block:"start"});
-  }")+'")';coverEl.hidden=false;}else{coverEl.style.backgroundImage="none";coverEl.hidden=true;}
   }
   ["design-store-name","design-welcome-message","design-theme","design-primary-color","design-background-color","design-accent-color","design-logo-url","design-cover-url"].forEach(id=>{
     $(id).addEventListener("input",updateStoreDesignPreview);
