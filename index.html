@@ -82,6 +82,8 @@
             <p class="muted field-wide">Make your public store feel like your brand. Leave image links blank if you do not have a logo or cover image yet.</p>
             <label class="field-wide">Store display name<input id="design-store-name" maxlength="120" placeholder="e.g. Regina’s Kitchen"></label>
             <label class="field-wide">Welcome message<textarea id="design-welcome-message" rows="2" maxlength="240" placeholder="Welcome! Browse our products and place an order."></textarea></label>
+            <label class="field-wide">Store description<textarea id="design-description" rows="3" maxlength="500" placeholder="Tell customers what you sell, where you are, or what makes your shop special."></textarea></label>
+            <label class="field-wide">Product layout<select id="design-layout"><option value="grid">Product cards · 2 per row on phones</option><option value="compact">Compact cards · smaller images</option><option value="list">List · one product per row</option></select></label>
             <label class="field-wide">Store style
               <select id="design-theme">
                 <option value="classic">Classic · clean and professional</option>
@@ -99,8 +101,8 @@
               <h3>Live preview</h3>
               <div id="storefront-design-preview" class="storefront-design-preview">
                 <div id="design-preview-cover" class="design-preview-cover" hidden></div>
-                <div class="design-preview-brand"><img id="design-preview-logo" alt="Store logo preview" hidden><div><strong id="design-preview-title">Your Store Name</strong><p id="design-preview-welcome">Browse our products and place an order.</p></div></div>
-                <div class="design-preview-sample"><span>Sample product</span><strong>₱199.00</strong><button type="button" tabindex="-1">Add to cart</button></div>
+                <div class="design-preview-brand"><img id="design-preview-logo" alt="Store logo preview" hidden><div><strong id="design-preview-title">Your Store Name</strong><p id="design-preview-welcome">Browse our products and place an order.</p><p id="design-preview-description" class="design-preview-description"></p></div></div>
+                <div id="design-preview-products" class="design-preview-products"><div class="design-preview-sample"><span>Sample product</span><strong>₱199.00</strong><button type="button" tabindex="-1">Add to cart</button></div><div class="design-preview-sample"><span>Another product</span><strong>₱99.00</strong><button type="button" tabindex="-1">Add to cart</button></div></div>
               </div>
             </div>
             <h3 class="field-wide">Manual payment options</h3>
