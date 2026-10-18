@@ -824,6 +824,51 @@
     if(!currentBusinessId){storeSettingsMessage("Business details are still loading. Please try again.",true);return;}
     $("store-settings-panel").scrollIntoView({behavior:"smooth",block:"start"});
   }
+  function updateStoreDesignPreview(){
+    const title=$("design-store-name").value.trim()||"Your Store Name";
+    const welcome=$("design-welcome-message").value.trim()||"Browse our products and place an order.";
+    const theme=$("design-theme").value||"classic";
+    const primary=$("design-primary-color").value||"#123b63";
+    const background=$("design-background-color").value||"#f5f7fb";
+    const accent=$("design-accent-color").value||"#ffffff";
+    const logo=$("design-logo-url").value.trim();
+    const cover=$("design-cover-url").value.trim();
+    const preview=$("storefront-design-preview");
+    preview.style.setProperty("--preview-primary",primary);
+    preview.style.setProperty("--preview-bg",background);
+    preview.style.setProperty("--preview-accent",accent);
+    preview.dataset.theme=theme;
+    $("design-preview-title").textContent=title;
+    $("design-preview-welcome").textContent=welcome;
+    const logoEl=$("design-preview-logo");
+    if(/^https?:\/\//i.test(logo)){logoEl.src=logo;logoEl.hidden=false;}else{logoEl.removeAttribute("src");logoEl.hidden=true;}
+    const coverEl=$("design-preview-cover");
+    if(/^https?:\/\//i.test(cover)){coverEl.style.backgroundImage='url("'+cover.replace(/["\\]/g,"\\  function showStoreSettingsPanel(){
+    $("customers-panel").hidden=true;$("products-panel").hidden=true;$("leads-panel").hidden=true;$("follow-ups-panel").hidden=true;$("orders-panel").hidden=true;$("order-payment-panel").hidden=true;$("sales-overview-panel").hidden=true;$("profit-overview-panel").hidden=true;
+    $("store-settings-panel").hidden=false;
+    document.querySelector(".section-title").hidden=true;document.querySelector(".feature-grid").hidden=true;
+    if(!currentBusinessId){storeSettingsMessage("Business details are still loading. Please try again.",true);return;}
+    $("store-settings-panel").scrollIntoView({behavior:"smooth",block:"start"});
+  }")+'")';coverEl.hidden=false;}else{coverEl.style.backgroundImage="none";coverEl.hidden=true;}
+  }
+  ["design-store-name","design-welcome-message","design-theme","design-primary-color","design-background-color","design-accent-color","design-logo-url","design-cover-url"].forEach(id=>{
+    $(id).addEventListener("input",updateStoreDesignPreview);
+    $(id).addEventListener("change",updateStoreDesignPreview);
+  });
+  function loadStoreDesignFields(d){
+    const design=d||{};
+    $("design-store-name").value=design.store_name||"";
+    $("design-welcome-message").value=design.welcome_message||"Browse our products and place an order.";
+    $("design-theme").value=design.theme||"classic";
+    $("design-primary-color").value=design.primary_color||"#123b63";
+    $("design-background-color").value=design.background_color||"#f5f7fb";
+    $("design-accent-color").value=design.accent_color||"#ffffff";
+    $("design-logo-url").value=design.logo_url||"";
+    $("design-cover-url").value=design.cover_image_url||"";
+    updateStoreDesignPreview();
+  }
+  loadStoreDesignFields(null);
+
   $("open-store-settings").addEventListener("click",showStoreSettingsPanel);
   $("back-store-dashboard").addEventListener("click",showDashboardOnly);
   $("store-settings-form").addEventListener("submit",async event=>{
@@ -857,6 +902,26 @@
       };
       const {error:paymentSaveError}=await supabase.from("store_payment_settings").upsert(paymentPayload,{onConflict:"business_id"});
       if(paymentSaveError)throw paymentSaveError;
+      const designPayload={
+        business_id:currentBusinessId,
+        store_name:$("design-store-name").value.trim()||null,
+        welcome_message:$("design-welcome-message").value.trim()||"Browse our products and place an order.",
+        theme:$("design-theme").value||"classic",
+        primary_color:$("design-primary-color").value||"#123b63",
+        background_color:$("design-background-color").value||"#f5f7fb",
+        accent_color:$("design-accent-color").value||"#ffffff",
+        logo_url:$("design-logo-url").value.trim()||null,
+        cover_image_url:$("design-cover-url").value.trim()||null,
+        updated_at:new Date().toISOString()
+      };
+      for(const field of ["logo_url","cover_image_url"]){
+        if(designPayload[field]&&!/^https?:\/\//i.test(designPayload[field])){
+          storeSettingsMessage("Logo and cover image links must begin with http:// or https://.",true);
+          $(field==="logo_url"?"design-logo-url":"design-cover-url").focus();return;
+        }
+      }
+      const {error:designSaveError}=await supabase.from("storefront_designs").upsert(designPayload,{onConflict:"business_id"});
+      if(designSaveError)throw designSaveError;
       updateStorePublicLink(slug,enabled);
       storeSettingsMessage("Store and payment settings saved.");
     }catch(err){
@@ -950,6 +1015,9 @@
       .select("gcash_enabled,gcash_number,gcash_account_name,maya_enabled,maya_number,maya_account_name,bank_enabled,bank_name,bank_account_name,bank_account_number,payment_notes")
       .eq("business_id",business.id)
       .maybeSingle();
+    const {data:storeDesign,error:storeDesignError}=await supabase.from("storefront_designs").select("store_name,theme,primary_color,background_color,accent_color,welcome_message,logo_url,cover_image_url").eq("business_id",business.id).maybeSingle();
+    if(storeDesignError)console.error("Store design load failed:",storeDesignError);
+    loadStoreDesignFields(storeDesignError?null:storeDesign);
     if(paymentSettingsError){
       console.error("Payment settings load failed:",paymentSettingsError);
       storeSettingsMessage("Store loaded, but payment settings could not be loaded. Please check the database permissions.",true);
