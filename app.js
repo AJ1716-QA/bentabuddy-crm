@@ -861,9 +861,9 @@
     $(id).addEventListener("input",updateStoreDesignPreview);
     $(id).addEventListener("change",updateStoreDesignPreview);
   });
-  function loadStoreDesignFields(d){
+  function loadStoreDesignFields(d,fallbackName=""){
     const design=d||{};
-    $("design-store-name").value=design.store_name||"";
+    $("design-store-name").value=design.store_name||fallbackName||"";
     $("design-welcome-message").value=design.welcome_message||"Browse our products and place an order.";
     $("design-description").value=design.description||"";
     $("design-layout").value=design.layout||"grid";
@@ -1027,7 +1027,7 @@
       .maybeSingle();
     const {data:storeDesign,error:storeDesignError}=await supabase.from("storefront_designs").select("store_name,theme,primary_color,background_color,accent_color,welcome_message,description,layout,logo_url,cover_image_url").eq("business_id",business.id).maybeSingle();
     if(storeDesignError)console.error("Store design load failed:",storeDesignError);
-    loadStoreDesignFields(storeDesignError?null:storeDesign);
+    loadStoreDesignFields(storeDesignError?null:storeDesign,business.business_name||"");
     if(paymentSettingsError){
       console.error("Payment settings load failed:",paymentSettingsError);
       storeSettingsMessage("Store loaded, but payment settings could not be loaded. Please check the database permissions.",true);
