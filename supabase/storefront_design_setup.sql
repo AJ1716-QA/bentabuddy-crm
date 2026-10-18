@@ -2,6 +2,7 @@
 -- Run once in Supabase SQL Editor. Additive only: does not change orders, products, checkout, or payments.
 create table if not exists public.storefront_designs (
   business_id uuid primary key references public.businesses(id) on delete cascade,
+  store_name text null check (store_name is null or char_length(store_name) <= 120),
   theme text not null default 'classic' check (theme in ('classic','fresh','bold')),
   primary_color text not null default '#123b63' check (primary_color ~ '^#[0-9A-Fa-f]{6}$'),
   background_color text not null default '#f5f7fb' check (background_color ~ '^#[0-9A-Fa-f]{6}$'),
@@ -30,6 +31,7 @@ with check (coalesce(private.owns_business(business_id), false) and coalesce(pri
 
 create or replace function public.get_public_store_design(p_store_slug text)
 returns table (
+  store_name text,
   theme text,
   primary_color text,
   background_color text,
@@ -43,7 +45,7 @@ stable
 security definer
 set search_path = ''
 as $function$
-  select d.theme, d.primary_color, d.background_color, d.accent_color,
+  select d.store_name, d.theme, d.primary_color, d.background_color, d.accent_color,
          d.welcome_message, d.logo_url, d.cover_image_url
   from public.businesses b
   join public.storefront_designs d on d.business_id = b.id
