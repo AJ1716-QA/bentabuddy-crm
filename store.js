@@ -24,6 +24,8 @@ function applyStoreDesign(d){
  description.textContent=d.description||"";
  description.hidden=!d.description;
  const layout=["grid","compact","list"].includes(d.layout)?d.layout:"grid";
+ const storeLayout=["hero","catalog","minimal"].includes(d.store_layout)?d.store_layout:"hero";
+ document.querySelector(".store-shell").dataset.storeLayout=storeLayout;
  $("store-products").classList.remove("layout-grid","layout-compact","layout-list");
  $("store-products").classList.add("layout-"+layout);
  const logo=$("store-logo-image"),cover=$("store-cover-image");
