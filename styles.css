@@ -55,3 +55,17 @@ body.store-page #store-products.layout-list .store-product{display:grid;grid-tem
 body.store-page #store-products.layout-list .store-product-image,
 body.store-page #store-products.layout-list .store-product-placeholder{height:100%;min-height:140px;aspect-ratio:auto}
 @media(max-width:420px){body.store-page #store-products.layout-list .store-product{grid-template-columns:110px minmax(0,1fr)}}
+
+/* BentaBuddy storefront layout presets */
+body.store-page .store-shell[data-store-layout="hero"] .store-header-row{padding:0 0 18px!important}
+body.store-page .store-shell[data-store-layout="hero"] .store-cover-image{display:block;width:100%;height:clamp(190px,38vw,390px);object-fit:cover;border-radius:22px;margin:0 0 18px;}
+body.store-page .store-shell[data-store-layout="catalog"] .store-cover-image{display:block;width:100%;height:clamp(110px,22vw,220px);object-fit:cover;border-radius:16px;margin:0 0 12px;}
+body.store-page .store-shell[data-store-layout="catalog"] .store-brand-group{gap:2px}
+body.store-page .store-shell[data-store-layout="catalog"] .store-subtitle{font-size:13px}
+body.store-page .store-shell[data-store-layout="minimal"] .store-cover-image{display:none!important}
+body.store-page .store-shell[data-store-layout="minimal"] .store-header-row{margin-bottom:8px!important}
+body.store-page .store-shell[data-store-layout="minimal"] #store-title.store-brand{font-size:clamp(20px,4vw,28px)!important}
+body.store-page .store-shell[data-store-layout="minimal"] .store-subtitle{font-size:12px!important}
+#storefront-design-preview[data-store-layout="hero"] .design-preview-cover{min-height:140px}
+#storefront-design-preview[data-store-layout="catalog"] .design-preview-cover{min-height:75px}
+#storefront-design-preview[data-store-layout="minimal"] .design-preview-cover{display:none!important}
