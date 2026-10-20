@@ -135,6 +135,7 @@ body.store-page #order-payment-instructions p{margin:5px 0;font-size:12px;line-h
       <section id="order-success" class="order-success" hidden role="status" aria-live="polite">
         <h2>Order submitted successfully</h2>
         <p>Your order number is <strong id="order-success-number"></strong>.</p>
+        <p id="order-success-notification" role="status" aria-live="polite">Your order is saved. Keep this order number for your records.</p>
         <p>Order total: <strong id="order-success-total"></strong>.</p>
         <p>Order pending · Unpaid. Pay the seller using the details below. The seller will confirm your payment.</p>
         <section id="order-payment-instructions" class="store-section" hidden aria-label="Seller payment instructions"></section>
@@ -146,7 +147,7 @@ body.store-page #order-payment-instructions p{margin:5px 0;font-size:12px;line-h
     </div>
   </main>
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
-  <script src="./store.js?v=20261017-order-push-1"></script>
+  <script src="./store.js?v=20261020-order-confirmation-2"></script>
   <script src="./checkout-payment.js?v=20261014-payment-security-5"></script>
 </body>
 </html>
