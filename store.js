@@ -20,17 +20,22 @@ function applyStoreDesign(d){
  const theme=["classic","fresh","bold"].includes(d.theme)?d.theme:"classic";
  $("store-header-row").dataset.theme=theme;
  $("store-subtitle").textContent=d.welcome_message||"Browse our products and place an order.";
+ $("store-subtitle").hidden=d.show_welcome===false;
  const description=$("store-description");
  description.textContent=d.description||"";
- description.hidden=!d.description;
+ description.hidden=!d.description||d.show_description===false;
  const layout=["grid","compact","list"].includes(d.layout)?d.layout:"grid";
  const storeLayout=["hero","catalog","minimal"].includes(d.store_layout)?d.store_layout:"hero";
  document.querySelector(".store-shell").dataset.storeLayout=storeLayout;
+ const fontStyle=["sans","serif","rounded"].includes(d.font_style)?d.font_style:"sans";
+ const cardStyle=["rounded","square"].includes(d.card_style)?d.card_style:"rounded";
+ document.querySelector(".store-shell").dataset.fontStyle=fontStyle;
+ document.querySelector(".store-shell").dataset.cardStyle=cardStyle;
  $("store-products").classList.remove("layout-grid","layout-compact","layout-list");
  $("store-products").classList.add("layout-"+layout);
  const logo=$("store-logo-image"),cover=$("store-cover-image");
- if(d.logo_url&&/^https?:\/\//i.test(d.logo_url)){logo.src=d.logo_url;logo.hidden=false;}else{logo.removeAttribute("src");logo.hidden=true;}
- if(d.cover_image_url&&/^https?:\/\//i.test(d.cover_image_url)){cover.src=d.cover_image_url;cover.hidden=false;}else{cover.removeAttribute("src");cover.hidden=true;}
+ if(d.logo_url&&/^https?:\/\//i.test(d.logo_url)&&d.show_logo!==false){logo.src=d.logo_url;logo.hidden=false;}else{logo.removeAttribute("src");logo.hidden=true;}
+ if(d.cover_image_url&&/^https?:\/\//i.test(d.cover_image_url)&&d.show_cover!==false){cover.src=d.cover_image_url;cover.hidden=false;}else{cover.removeAttribute("src");cover.hidden=true;}
 }
 function fulfillment(){const pickup=$("checkout-fulfillment").value==="pickup";$("checkout-address-wrap").hidden=pickup;$("checkout-address").required=!pickup}
 function resetPaymentSelection(clearReference=true){const method=$("checkout-payment-method");const detail=$("checkout-payment-detail");if(method)method.value="";if(detail)detail.innerHTML="";if(clearReference&&$("checkout-payment-reference"))$("checkout-payment-reference").value="";}
