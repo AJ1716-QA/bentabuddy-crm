@@ -69,3 +69,10 @@ body.store-page .store-shell[data-store-layout="minimal"] .store-subtitle{font-s
 #storefront-design-preview[data-store-layout="hero"] .design-preview-cover{min-height:140px}
 #storefront-design-preview[data-store-layout="catalog"] .design-preview-cover{min-height:75px}
 #storefront-design-preview[data-store-layout="minimal"] .design-preview-cover{display:none!important}
+
+
+/* Additional seller-controlled storefront styles */
+#storefront-design-preview[data-font-style="serif"],body.store-page .store-shell[data-font-style="serif"]{font-family:Georgia,"Times New Roman",serif}
+#storefront-design-preview[data-font-style="rounded"],body.store-page .store-shell[data-font-style="rounded"]{font-family:ui-rounded,"Arial Rounded MT Bold",system-ui,sans-serif}
+#storefront-design-preview[data-card-style="square"] .design-preview-sample,body.store-page .store-shell[data-card-style="square"] .store-product{border-radius:2px!important}
+#storefront-design-preview[data-card-style="rounded"] .design-preview-sample,body.store-page .store-shell[data-card-style="rounded"] .store-product{border-radius:14px}
