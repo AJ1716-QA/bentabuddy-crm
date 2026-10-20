@@ -67,8 +67,8 @@ $function$;
 REVOKE ALL ON FUNCTION public.get_public_store_design(text) FROM PUBLIC;
 GRANT EXECUTE ON FUNCTION public.get_public_store_design(text) TO anon, authenticated;
 
--- Two fixed image slots per business: logo.jpg and cover.jpg.
 -- Each uploaded image is compressed by the app and limited to 1 MB.
+-- RLS limits each business folder to 12 objects total (up to 12 MB: logo, cover, and product images).
 INSERT INTO storage.buckets (id, name, public, file_size_limit, allowed_mime_types)
 VALUES ('storefront-media', 'storefront-media', true, 1048576, ARRAY['image/jpeg']::text[])
 ON CONFLICT (id) DO UPDATE
@@ -91,6 +91,16 @@ WITH CHECK (
     SELECT 1 FROM public.businesses AS b
     WHERE b.id::text = (storage.foldername(name))[1]
       AND b.owner_id = (SELECT auth.uid())
+  )
+  AND (
+    (SELECT count(*) FROM storage.objects AS existing
+     WHERE existing.bucket_id = 'storefront-media'
+       AND (storage.foldername(existing.name))[1] = (storage.foldername(name))[1]) < 12
+    OR EXISTS (
+      SELECT 1 FROM storage.objects AS current_object
+      WHERE current_object.bucket_id = 'storefront-media'
+        AND current_object.name = storage.objects.name
+    )
   )
 );
 
