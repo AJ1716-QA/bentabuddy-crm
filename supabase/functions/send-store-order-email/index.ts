@@ -46,7 +46,7 @@ Deno.serve(async (req) => {
       auth: { persistSession: false, autoRefreshToken: false },
     });
     const { data: business, error: businessError } = await admin
-      .from("businesses").select("id,name,business_name,store_slug,storefront_enabled")
+      .from("businesses").select("*")
       .eq("store_slug", storeSlug).eq("storefront_enabled", true).maybeSingle();
     if (businessError || !business) return reply({ error: "Could not verify this storefront." }, 404);
 
