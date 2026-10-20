@@ -836,21 +836,30 @@
     const accent=$("design-accent-color").value||"#ffffff";
     const logo=$("design-logo-url").value.trim();
     const cover=$("design-cover-url").value.trim();
+    const fontStyle=$("design-font-style").value||"sans";
+    const cardStyle=$("design-card-style").value||"rounded";
+    const showWelcome=$("design-show-welcome").checked;
+    const showDescription=$("design-show-description").checked;
+    const showCover=$("design-show-cover").checked;
+    const showLogo=$("design-show-logo").checked;
     const preview=$("storefront-design-preview");
     preview.style.setProperty("--preview-primary",primary);
     preview.style.setProperty("--preview-bg",background);
     preview.style.setProperty("--preview-accent",accent);
     preview.dataset.theme=theme;
     preview.dataset.storeLayout=storeLayout;
+    preview.dataset.fontStyle=fontStyle;
+    preview.dataset.cardStyle=cardStyle;
+    $("design-preview-welcome").hidden=!showWelcome;
     $("design-preview-products").dataset.layout=layout;
     $("design-preview-title").textContent=title;
     $("design-preview-welcome").textContent=welcome;
     $("design-preview-description").textContent=description;
-    $("design-preview-description").hidden=!description;
+    $("design-preview-description").hidden=!showDescription||!description;
     const logoEl=$("design-preview-logo");
-    if(/^https?:\/\//i.test(logo)){logoEl.src=logo;logoEl.hidden=false;}else{logoEl.removeAttribute("src");logoEl.hidden=true;}
+    if(/^https?:\/\//i.test(logo)&&showLogo){logoEl.src=logo;logoEl.hidden=false;}else{logoEl.removeAttribute("src");logoEl.hidden=true;}
     const coverEl=$("design-preview-cover");
-    if(/^https?:\/\//i.test(cover)){coverEl.style.backgroundImage='url("'+cover.replace(/["\\\n\r]/g,"")+'")';coverEl.hidden=false;}else{coverEl.style.backgroundImage="none";coverEl.hidden=true;}
+    if(/^https?:\/\//i.test(cover)&&showCover){coverEl.style.backgroundImage='url("'+cover.replace(/["\\\n\r]/g,"")+'")';coverEl.hidden=false;}else{coverEl.style.backgroundImage="none";coverEl.hidden=true;}
   }
   function showStoreSettingsPanel(){
     $("customers-panel").hidden=true;$("products-panel").hidden=true;$("leads-panel").hidden=true;$("follow-ups-panel").hidden=true;$("orders-panel").hidden=true;$("order-payment-panel").hidden=true;$("sales-overview-panel").hidden=true;$("profit-overview-panel").hidden=true;
@@ -859,7 +868,7 @@
     if(!currentBusinessId){storeSettingsMessage("Business details are still loading. Please try again.",true);return;}
     $("store-settings-panel").scrollIntoView({behavior:"smooth",block:"start"});
   }
-  ["design-store-name","design-welcome-message","design-description","design-store-layout","design-layout","design-theme","design-primary-color","design-background-color","design-accent-color","design-logo-url","design-cover-url"].forEach(id=>{
+  ["design-store-name","design-welcome-message","design-description","design-store-layout","design-layout","design-theme","design-primary-color","design-background-color","design-accent-color","design-logo-url","design-cover-url","design-font-style","design-card-style","design-show-welcome","design-show-description","design-show-cover","design-show-logo"].forEach(id=>{
     $(id).addEventListener("input",updateStoreDesignPreview);
     $(id).addEventListener("change",updateStoreDesignPreview);
   });
@@ -876,6 +885,12 @@
     $("design-accent-color").value=design.accent_color||"#ffffff";
     $("design-logo-url").value=design.logo_url||"";
     $("design-cover-url").value=design.cover_image_url||"";
+    $("design-font-style").value=design.font_style||"sans";
+    $("design-card-style").value=design.card_style||"rounded";
+    $("design-show-welcome").checked=design.show_welcome!==false;
+    $("design-show-description").checked=design.show_description!==false;
+    $("design-show-cover").checked=design.show_cover!==false;
+    $("design-show-logo").checked=design.show_logo!==false;
     updateStoreDesignPreview();
   }
   loadStoreDesignFields(null);
@@ -926,6 +941,12 @@
         accent_color:$("design-accent-color").value||"#ffffff",
         logo_url:$("design-logo-url").value.trim()||null,
         cover_image_url:$("design-cover-url").value.trim()||null,
+        font_style:$("design-font-style").value||"sans",
+        card_style:$("design-card-style").value||"rounded",
+        show_welcome:$("design-show-welcome").checked,
+        show_description:$("design-show-description").checked,
+        show_cover:$("design-show-cover").checked,
+        show_logo:$("design-show-logo").checked,
         updated_at:new Date().toISOString()
       };
       for(const field of ["logo_url","cover_image_url"]){
