@@ -101,8 +101,11 @@
             <label>Brand color<input id="design-primary-color" type="color" value="#123b63"></label>
             <label>Page background<input id="design-background-color" type="color" value="#f5f7fb"></label>
             <label>Card / accent color<input id="design-accent-color" type="color" value="#ffffff"></label>
+            <label class="field-wide">Upload logo (image is compressed to fit the 1 MB limit)<input id="design-logo-file" type="file" accept="image/*"></label>
             <label class="field-wide">Logo image URL (optional)<input id="design-logo-url" type="url" maxlength="1000" placeholder="https://..."></label>
+            <label class="field-wide">Upload cover image (image is compressed to fit the 1 MB limit)<input id="design-cover-file" type="file" accept="image/*"></label>
             <label class="field-wide">Cover image URL (optional)<input id="design-cover-url" type="url" maxlength="1000" placeholder="https://..."></label>
+            <p id="design-upload-status" class="muted field-wide" aria-live="polite">Storefront uploads use up to 2 MB per store: one compressed logo and one compressed cover image.</p>
             <p class="muted field-wide">Use direct public image links beginning with https:// or http://. These images will be visible to anyone who visits your store.</p>
             <div class="field-wide storefront-preview-wrap">
               <h3>Live preview</h3>
