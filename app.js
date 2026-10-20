@@ -895,6 +895,49 @@
   }
   loadStoreDesignFields(null);
 
+  async function compressStoreImage(file){
+    if(!file||!file.type||!file.type.startsWith("image/"))throw new Error("Choose an image file.");
+    if(typeof createImageBitmap!=="function")throw new Error("Image compression is not supported in this browser. Try a recent Chrome browser.");
+    const bitmap=await createImageBitmap(file);
+    const scale=Math.min(1,1400/Math.max(bitmap.width,bitmap.height));
+    const canvas=document.createElement("canvas");
+    canvas.width=Math.max(1,Math.round(bitmap.width*scale));
+    canvas.height=Math.max(1,Math.round(bitmap.height*scale));
+    const ctx=canvas.getContext("2d");
+    if(!ctx)throw new Error("Could not process this image.");
+    ctx.drawImage(bitmap,0,0,canvas.width,canvas.height);
+    bitmap.close();
+    for(let quality=.86;quality>=.5;quality-=.08){
+      const blob=await new Promise(resolve=>canvas.toBlob(resolve,"image/jpeg",quality));
+      if(blob&&blob.size<=1048576)return blob;
+    }
+    throw new Error("This image cannot be compressed below 1 MB. Choose a smaller image.");
+  }
+  async function uploadStoreDesignImage(kind,file){
+    const status=$("design-upload-status");
+    if(!supabase||!currentBusinessId){status.textContent="Your business is still loading. Please try again.";return;}
+    const input=$(kind==="logo"?"design-logo-url":"design-cover-url");
+    const fileInput=$(kind==="logo"?"design-logo-file":"design-cover-file");
+    status.textContent="Compressing and uploading image…";
+    fileInput.disabled=true;
+    try{
+      const blob=await compressStoreImage(file);
+      const path=currentBusinessId+"/"+kind+".jpg";
+      const {error}=await supabase.storage.from("storefront-media").upload(path,blob,{contentType:"image/jpeg",upsert:true,cacheControl:"3600"});
+      if(error)throw error;
+      const {data}=supabase.storage.from("storefront-media").getPublicUrl(path);
+      if(!data?.publicUrl)throw new Error("Upload succeeded, but the public image URL could not be created.");
+      input.value=data.publicUrl;
+      updateStoreDesignPreview();
+      status.textContent=(kind==="logo"?"Logo":"Cover image")+" uploaded and compressed. Save store settings to publish it.";
+    }catch(err){
+      console.error("Storefront image upload failed:",err);
+      status.textContent=err?.message||"Image upload failed. Check the storage setup and try again.";
+    }finally{fileInput.disabled=false;fileInput.value="";}
+  }
+  $("design-logo-file").addEventListener("change",event=>{const file=event.target.files?.[0];if(file)uploadStoreDesignImage("logo",file);});
+  $("design-cover-file").addEventListener("change",event=>{const file=event.target.files?.[0];if(file)uploadStoreDesignImage("cover",file);});
+
   $("open-store-settings").addEventListener("click",showStoreSettingsPanel);
   $("back-store-dashboard").addEventListener("click",showDashboardOnly);
   $("store-settings-form").addEventListener("submit",async event=>{
