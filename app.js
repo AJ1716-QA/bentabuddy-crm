@@ -229,6 +229,24 @@
       if(id&&productEditMode)result=await supabase.from("products").update(payload).eq("id",id).eq("business_id",currentBusinessId).select("id").single();
       else result=await supabase.from("products").insert(payload).select("id").single();
       if(result.error)throw result.error;
+      const productImageFile=$("product-image-file").files?.[0];
+      if(productImageFile){
+        try{
+          const imageBlob=await compressStoreImage(productImageFile);
+          const imagePath=currentBusinessId+"/products/"+result.data.id+".jpg";
+          const {error:uploadError}=await supabase.storage.from("storefront-media").upload(imagePath,imageBlob,{contentType:"image/jpeg",upsert:true,cacheControl:"3600"});
+          if(uploadError)throw uploadError;
+          const {data:publicImage}=supabase.storage.from("storefront-media").getPublicUrl(imagePath);
+          const {error:imageSaveError}=await supabase.from("products").update({image_url:publicImage.publicUrl,updated_at:new Date().toISOString()}).eq("id",result.data.id).eq("business_id",currentBusinessId);
+          if(imageSaveError)throw imageSaveError;
+          $("product-image-url").value=publicImage.publicUrl;
+        }catch(imageError){
+          console.error("Product image upload failed:",imageError);
+          await loadProducts();
+          productMessage("Product was saved, but its image upload failed: "+(imageError?.message||"Please check storage setup and try again."),true);
+          return;
+        }
+      }
       resetProductForm();await loadProducts();productMessage(id?"Product details updated.":"Product added successfully.");
     }catch(err){console.error("Product save failed:",err);productMessage(err?.message||"Could not save this product. Please try again.",true);}
     finally{button.disabled=false;button.textContent="Save product";}
